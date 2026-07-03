@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Klinik Pratama Sehat</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#0057B8', 'primary-dark': '#003f87', 'primary-light': '#e8f0fe',
+        accent: '#00A878', 'accent-light': '#e6f7f3', surface: '#f6faff',
+        warn: '#F59E0B', danger: '#EF4444',
+      },
+      fontFamily: { sans: ['Inter','sans-serif'], display: ['Plus Jakarta Sans','sans-serif'] }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family:'Inter',sans-serif; background:#f6faff; }
+  .font-display { font-family:'Plus Jakarta Sans',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align:middle; }
+  .filled { font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+  [data-page] { display:none; }
+  [data-page].active { display:block; }
+  .sidebar-item.active { background:#e8f0fe; color:#0057B8; font-weight:600; }
+  .sidebar-item.active .material-symbols-outlined { color:#0057B8; }
+  .toast { animation:slideIn .3s ease; }
+  @keyframes slideIn { from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1} }
+  .modal-overlay { background:rgba(0,0,0,.5); backdrop-filter:blur(2px); }
+  .hero-bg { background:linear-gradient(135deg,#0057B8 0%,#003f87 50%,#00A878 100%); }
+  .card-hover { transition:all .2s ease; }
+  .card-hover:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,87,184,.15); }
+  input,select,textarea { outline:none; }
+  .table-row:hover { background:#f0f7ff; }
+  .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .nav-link { transition:color .2s; }
+  .nav-link:hover { color:#0057B8; }
+  .nav-link.active-nav { color:#0057B8; border-bottom:2px solid #0057B8; padding-bottom:2px; }
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:#f1f1f1; }
+  ::-webkit-scrollbar-thumb { background:#c2c6d4; border-radius:3px; }
+  .hero-float { animation:float 6s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)} }
+  .pulse-dot { animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
+  .stat-counter { font-variant-numeric:tabular-nums; }
+  .admin-section { display:none; }
+  .admin-section.active { display:block; }
+  #admin-dashboard { display:block; }
+  .loading-overlay { position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px; }
+  .spinner { width:40px;height:40px;border:4px solid #e8f0fe;border-top-color:#0057B8;border-radius:50%;animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .portal-section { display:none; }
+  .portal-section.active { display:block; }
+  #portal-riwayat { display:block; }
+  .portal-tab { border-bottom:2px solid transparent; transition:all .2s; }
+  .portal-tab.active-tab { color:#0057B8; border-bottom-color:#0057B8; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loadingScreen" class="loading-overlay">
+  <div class="spinner"></div>
+  <p class="text-sm text-gray-500 font-medium">Memuat database…</p>
+</div>
+
+<!-- TOAST -->
+<div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-[999] modal-overlay hidden items-center justify-center p-4" style="display:none">
+  <div id="modalBox" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ====================== PUBLIC WEBSITE ====================== -->
+<div id="publicSite">
+
+  <!-- NAVBAR -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 transition-shadow">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
+        <div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
+          <span class="material-symbols-outlined text-white text-[20px] filled">local_hospital</span>
+        </div>
+        <span class="font-display font-bold text-primary-dark text-lg">Klinik Pratama</span>
+      </div>
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="#" onclick="showPage('home')" class="nav-link" id="nav-home">Beranda</a>
+        <a href="#" onclick="showPage('dokter')" class="nav-link" id="nav-dokter">Dokter</a>
+        <a href="#" onclick="showPage('layanan')" class="nav-link" id="nav-layanan">Layanan</a>
+        <a href="#" onclick="showPage('jadwal')" class="nav-link" id="nav-jadwal">Jadwal</a>
+        <a href="#" onclick="showPage('kontak')" class="nav-link" id="nav-kontak">Kontak</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="showPage('login')" class="hidden md:block text-sm font-medium text-primary border border-primary px-4 py-2 rounded-lg hover:bg-primary-light transition">Masuk</button>
+        <button onclick="showPage('daftar')" class="text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">Daftar Berobat</button>
+        <button class="md:hidden p-2" onclick="toggleMobileMenu()">
+          <span class="material-symbols-outlined text-gray-600">menu</span>
+        </button>
+      </div>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-3 text-sm font-medium text-gray-600">
+      <a href="#" onclick="showPage('home');toggleMobileMenu()">Beranda</a>
+      <a href="#" onclick="showPage('dokter');toggleMobileMenu()">Dokter</a>
+      <a href="#" onclick="showPage('layanan');toggleMobileMenu()">Layanan</a>
+      <a href="#" onclick="showPage('jadwal');toggleMobileMenu()">Jadwal</a>
+      <a href="#" onclick="showPage('kontak');toggleMobileMenu()">Kontak</a>
+      <a href="#" onclick="showPage('login');toggleMobileMenu()" class="text-primary">Masuk Admin</a>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <div data-page="home" class="pt-16">
+    <section class="hero-bg min-h-[92vh] flex items-center relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-20 right-20 w-64 h-64 bg-white rounded-full"></div>
+        <div class="absolute bottom-20 left-10 w-40 h-40 bg-white rounded-full"></div>
+      </div>
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-20 grid md:grid-cols-2 gap-12 items-center relative z-10">
+        <div class="text-white">
+          <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur rounded-full px-4 py-2 text-sm font-medium mb-6">
+            <span class="w-2 h-2 bg-accent rounded-full pulse-dot"></span> Buka Setiap Hari 07.00 – 21.00
+          </div>
+          <h1 class="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">Kesehatan Anda<br/>Prioritas <span class="text-accent">Utama</span> Kami</h1>
+          <p class="text-white/80 text-lg mb-8 max-w-md">Pelayanan medis terpercaya dengan dokter berpengalaman dan fasilitas modern untuk Anda dan keluarga tercinta.</p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="showPage('daftar')" class="bg-white text-primary font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition flex items-center gap-2">
+              <span class="material-symbols-outlined filled text-[20px]">calendar_add_on</span> Daftar Sekarang
+            </button>
+            <button onclick="showPage('dokter')" class="border-2 border-white/50 text-white font-medium px-6 py-3 rounded-xl hover:bg-white/10 transition">Lihat Dokter</button>
+          </div>
+          <div class="flex gap-6 mt-10">
+            <div><div class="text-3xl font-display font-bold stat-counter" id="statPasien">0</div><div class="text-white/70 text-sm">Pasien Puas</div></div>
+            <div class="w-px bg-white/20"></div>
+            <div><div class="text-3xl font-display font-bold stat-counter" id="statDokter">0</div><div class="text-white/70 text-sm">Dokter Ahli</div></div>
+            <div class="w-px bg-white/20"></div>
+            <div><div class="text-3xl font-display font-bold stat-counter" id="statTahun">0</div><div class="text-white/70 text-sm">Tahun Berdiri</div></div>
+          </div>
+        </div>
+        <div class="hidden md:flex justify-center">
+          <div class="relative hero-float">
+            <div class="w-80 h-80 bg-white/10 backdrop-blur rounded-3xl border border-white/20 flex items-center justify-center">
+              <span class="material-symbols-outlined text-white filled" style="font-size:160px">health_metrics</span>
+            </div>
+            <div class="absolute -bottom-4 -left-8 bg-white rounded-2xl shadow-xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 bg-accent-light rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-accent filled text-[20px]">verified</span>
+              </div>
+              <div><div class="font-semibold text-sm text-gray-800">Terakreditasi</div><div class="text-xs text-gray-500">Kemenkes RI</div></div>
+            </div>
+            <div class="absolute -top-4 -right-4 bg-accent rounded-2xl shadow-xl p-3 text-white text-center">
+              <div class="text-2xl font-bold">24/7</div><div class="text-xs">Darurat</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <div class="bg-white border-b">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-primary filled text-[20px]">groups</span></div><div><div class="font-bold text-gray-800">1.500+</div><div class="text-xs text-gray-500">Pasien/Bulan</div></div></div>
+        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-accent-light rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-accent filled text-[20px]">stethoscope</span></div><div><div class="font-bold text-gray-800">15+</div><div class="text-xs text-gray-500">Dokter Spesialis</div></div></div>
+        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-yellow-500 filled text-[20px]">star</span></div><div><div class="font-bold text-gray-800">4.9/5.0</div><div class="text-xs text-gray-500">Rating Pasien</div></div></div>
+        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-red-500 filled text-[20px]">emergency</span></div><div><div class="font-bold text-gray-800">24 Jam</div><div class="text-xs text-gray-500">Layanan IGD</div></div></div>
+      </div>
+    </div>
+
+    <!-- Layanan -->
+    <section class="py-16 px-4 sm:px-6 max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <p class="text-primary font-semibold text-sm mb-2">LAYANAN KAMI</p>
+        <h2 class="font-display text-3xl font-bold text-gray-900 mb-3">Layanan Kesehatan Lengkap</h2>
+        <p class="text-gray-500 max-w-xl mx-auto">Kami menyediakan layanan medis komprehensif yang didukung oleh tenaga kesehatan profesional.</p>
+      </div>
+      <div id="homeLayananGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      <div class="text-center mt-8"><button onclick="showPage('layanan')" class="text-primary font-semibold hover:underline flex items-center gap-1 mx-auto">Lihat semua layanan <span class="material-symbols-outlined text-[18px]">arrow_forward</span></button></div>
+    </section>
+
+    <!-- Dokter -->
+    <section class="py-16 bg-white px-4 sm:px-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-end mb-10">
+          <div><p class="text-primary font-semibold text-sm mb-1">TIM MEDIS</p><h2 class="font-display text-3xl font-bold text-gray-900">Dokter Kami</h2></div>
+          <button onclick="showPage('dokter')" class="hidden md:flex items-center gap-1 text-primary font-medium hover:underline">Lihat semua <span class="material-symbols-outlined text-[18px]">arrow_forward</span></button>
+        </div>
+        <div id="homeDokterGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-16 px-4 sm:px-6">
+      <div class="max-w-4xl mx-auto bg-primary rounded-3xl p-10 text-center text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10"><div class="absolute -top-10 -right-10 w-48 h-48 bg-white rounded-full"></div><div class="absolute -bottom-10 -left-10 w-64 h-64 bg-white rounded-full"></div></div>
+        <div class="relative z-10">
+          <h2 class="font-display text-3xl font-bold mb-4">Siap Melakukan Pemeriksaan?</h2>
+          <p class="text-white/80 mb-8 max-w-xl mx-auto">Daftarkan diri Anda sekarang dan dapatkan pelayanan medis terbaik dari tim dokter kami.</p>
+          <button onclick="showPage('daftar')" class="bg-white text-primary font-bold px-8 py-4 rounded-xl hover:bg-gray-50 transition inline-flex items-center gap-2">
+            <span class="material-symbols-outlined filled">calendar_add_on</span> Daftar Berobat Sekarang
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white pt-14 pb-6 px-4 sm:px-6">
+      <div class="max-w-6xl mx-auto grid md:grid-cols-4 gap-10 mb-10">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-2 mb-4"><div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-white text-[20px] filled">local_hospital</span></div><span class="font-display font-bold text-xl">Klinik Pratama</span></div>
+          <p class="text-gray-400 text-sm mb-4">Memberikan pelayanan kesehatan profesional dengan standar medis tertinggi.</p>
+        </div>
+        <div><h5 class="font-semibold mb-4">Layanan</h5><ul class="space-y-2 text-sm text-gray-400"><li><a href="#" class="hover:text-white">Poli Umum</a></li><li><a href="#" class="hover:text-white">Poli Gigi</a></li><li><a href="#" class="hover:text-white">Poli Anak</a></li><li><a href="#" class="hover:text-white">Laboratorium</a></li><li><a href="#" class="hover:text-white">IGD 24 Jam</a></li></ul></div>
+        <div><h5 class="font-semibold mb-4">Kontak</h5><ul class="space-y-3 text-sm text-gray-400"><li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-primary">location_on</span>Jl. Kesehatan No. 123, Jakarta Pusat</li><li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-primary">call</span>(021) 555-0123</li><li class="flex gap-2"><span class="material-symbols-outlined text-[16px] text-primary">mail</span>info@klinikpratama.co.id</li></ul></div>
+      </div>
+      <div class="border-t border-white/10 pt-6 text-center text-xs text-gray-500">© 2025 Klinik Pratama. Hak Cipta Dilindungi.</div>
+    </footer>
+  </div>
+
+  <!-- DOKTER PAGE -->
+  <div data-page="dokter" class="pt-16 min-h-screen">
+    <div class="bg-gradient-to-br from-primary to-primary-dark py-14 px-4 sm:px-6 text-white">
+      <div class="max-w-6xl mx-auto"><h1 class="font-display text-4xl font-bold mb-3">Tim Dokter Kami</h1><p class="text-white/80 max-w-xl">Didukung oleh tenaga medis profesional berpengalaman.</p></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <div class="flex flex-wrap gap-2 mb-8" id="dokterFilter"></div>
+      <div id="dokterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    </div>
+  </div>
+
+  <!-- LAYANAN PAGE -->
+  <div data-page="layanan" class="pt-16 min-h-screen">
+    <div class="bg-gradient-to-br from-accent to-green-700 py-14 px-4 sm:px-6 text-white">
+      <div class="max-w-6xl mx-auto"><h1 class="font-display text-4xl font-bold mb-3">Layanan Kesehatan</h1><p class="text-white/80 max-w-xl">Berbagai layanan medis komprehensif dengan fasilitas modern.</p></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <div id="layananGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+  </div>
+
+  <!-- JADWAL PAGE -->
+  <div data-page="jadwal" class="pt-16 min-h-screen">
+    <div class="bg-gradient-to-br from-purple-600 to-purple-800 py-14 px-4 sm:px-6 text-white">
+      <div class="max-w-6xl mx-auto"><h1 class="font-display text-4xl font-bold mb-3">Jadwal Praktik Dokter</h1><p class="text-white/80 max-w-xl">Temukan jadwal praktik dokter dan jadwalkan kunjungan Anda.</p></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Dokter</th>
+                <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Spesialisasi</th>
+                <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Hari</th>
+                <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Jam</th>
+                <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
+                <th class="px-6 py-4"></th>
+              </tr>
+            </thead>
+            <tbody id="jadwalTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KONTAK PAGE -->
+  <div data-page="kontak" class="pt-16 min-h-screen">
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 py-14 px-4 sm:px-6 text-white">
+      <div class="max-w-6xl mx-auto"><h1 class="font-display text-4xl font-bold mb-3">Hubungi Kami</h1><p class="text-white/80">Kami siap membantu pertanyaan dan kebutuhan Anda.</p></div>
+    </div>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+      <div class="grid md:grid-cols-2 gap-10">
+        <div class="space-y-6">
+          <div class="flex gap-4"><div class="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-primary filled">location_on</span></div><div><h4 class="font-semibold mb-1">Alamat</h4><p class="text-gray-500 text-sm">Jl. Kesehatan No. 123, Jakarta Pusat, DKI Jakarta 10110</p></div></div>
+          <div class="flex gap-4"><div class="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-primary filled">call</span></div><div><h4 class="font-semibold mb-1">Telepon</h4><p class="text-gray-500 text-sm">(021) 555-0123<br/>WhatsApp: 0812-3456-7890</p></div></div>
+          <div class="flex gap-4"><div class="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-primary filled">schedule</span></div><div><h4 class="font-semibold mb-1">Jam Operasional</h4><p class="text-gray-500 text-sm">Senin – Minggu: 07.00 – 21.00<br/>IGD: 24 Jam</p></div></div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 class="font-display font-bold text-lg mb-5">Kirim Pesan</h3>
+          <div class="space-y-4">
+            <input type="text" id="kontakNama" placeholder="Nama Lengkap" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"/>
+            <input type="email" id="kontakEmail" placeholder="Email" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"/>
+            <input type="text" id="kontakSubjek" placeholder="Subjek" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"/>
+            <textarea id="kontakPesan" rows="4" placeholder="Pesan Anda..." class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none"></textarea>
+            <button onclick="submitKontak()" class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-primary-dark transition">Kirim Pesan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN PAGE -->
+  <div data-page="login" class="pt-16 min-h-screen flex items-center justify-center px-4 py-12 bg-surface">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-white filled text-[28px]">local_hospital</span></div>
+        <h1 class="font-display text-xl font-bold text-gray-900">Klinik Pratama</h1>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex bg-gray-100 rounded-xl p-1 mb-5">
+          <button id="loginTabAdmin" onclick="switchLoginTab('admin')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition bg-white shadow text-primary">Admin / Staf</button>
+          <button id="loginTabPasien" onclick="switchLoginTab('pasien')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition text-gray-400">Pasien</button>
+        </div>
+
+        <!-- Admin Form -->
+        <div id="loginFormAdmin" class="space-y-3">
+          <input type="text" id="loginUser" placeholder="Username" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" onkeydown="if(event.key==='Enter')doLogin()"/>
+          <div class="relative">
+            <input type="password" id="loginPass" placeholder="Password" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm pr-11" onkeydown="if(event.key==='Enter')doLogin()"/>
+            <button onclick="togglePassword('loginPass')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+          </div>
+          <button onclick="doLogin()" class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-primary-dark transition text-sm">Masuk</button>
+          <button type="button" onclick="showAkunList()" class="w-full text-xs text-gray-400 hover:text-primary py-1 flex items-center justify-center gap-1 transition"><span class="material-symbols-outlined text-[15px]">manage_accounts</span> Lihat daftar akun tersimpan</button>
+          <div id="akunListBox" class="hidden bg-gray-50 rounded-xl p-3 space-y-2"></div>
+        </div>
+
+        <!-- Pasien Form: cukup NIK + nama + TTL, auto-register jika belum ada -->
+        <div id="loginFormPasien" class="space-y-3 hidden">
+          <div class="bg-blue-50 rounded-xl px-4 py-3 text-xs text-blue-700">
+            <b>Pertama kali?</b> Isi data di bawah — akun otomatis dibuat. Kunjungan berikutnya cukup masukkan NIK &amp; tanggal lahir yang sama.
+          </div>
+          <input type="text" id="loginNamaP" placeholder="Nama lengkap" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"/>
+          <input type="text" id="loginNIK" maxlength="16" placeholder="NIK (16 digit)" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono" onkeydown="if(event.key==='Enter')doLoginPasien()"/>
+          <input type="date" id="loginTTL" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm" onkeydown="if(event.key==='Enter')doLoginPasien()"/>
+          <button onclick="doLoginPasien()" class="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:bg-green-700 transition text-sm">Masuk / Daftar</button>
+          <p class="text-xs text-gray-400 text-center">Sudah pernah daftar? Kosongkan kolom nama, isi NIK &amp; tanggal lahir saja.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- DAFTAR PAGE -->
+  <div data-page="daftar" class="pt-16 min-h-screen px-4 py-12 bg-surface">
+    <div class="max-w-xl mx-auto">
+      <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold text-gray-900">Daftar Berobat</h1><p class="text-gray-500 text-sm mt-1">Isi data kunjungan untuk mendaftar</p></div>
+      <div class="bg-white rounded-2xl shadow-sm p-8">
+        <div class="space-y-4">
+          <!-- Info pasien (auto-isi jika sudah login) -->
+          <div id="daftarInfoPasien" class="hidden bg-green-50 rounded-xl px-4 py-3 flex items-center gap-3">
+            <span class="material-symbols-outlined text-accent text-[20px] filled">check_circle</span>
+            <div class="text-sm"><span class="font-semibold text-gray-800" id="daftarNamaLogin"></span><span class="text-gray-500 ml-2" id="daftarNikLogin"></span></div>
+          </div>
+          <!-- Data diri (hanya muncul jika belum login) -->
+          <div id="daftarFormPasien" class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="text-xs font-medium text-gray-600 block mb-1">Nama Depan *</label><input type="text" id="regNamaDepan" placeholder="Nama depan" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+              <div><label class="text-xs font-medium text-gray-600 block mb-1">Nama Belakang</label><input type="text" id="regNamaBelakang" placeholder="Nama belakang" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+            </div>
+            <div><label class="text-xs font-medium text-gray-600 block mb-1">NIK (16 digit) *</label><input type="text" id="regNIK" placeholder="16 digit NIK" maxlength="16" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono"/></div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="text-xs font-medium text-gray-600 block mb-1">Tanggal Lahir *</label><input type="date" id="regTTL" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+              <div><label class="text-xs font-medium text-gray-600 block mb-1">Jenis Kelamin *</label><select id="regJK" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih...</option><option>Laki-laki</option><option>Perempuan</option></select></div>
+            </div>
+            <div><label class="text-xs font-medium text-gray-600 block mb-1">No. Telepon *</label><input type="tel" id="regTelp" placeholder="08xxxxxxxxxx" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+            <div><label class="text-xs font-medium text-gray-600 block mb-1">Alamat</label><input type="text" id="regAlamat" placeholder="Alamat lengkap" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          </div>
+          <hr class="border-gray-100"/>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data Kunjungan</p>
+          <div><label class="text-xs font-medium text-gray-600 block mb-1">Layanan *</label><select id="regLayanan" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" onchange="updateDokterByLayanan()"><option value="">Pilih Layanan...</option></select></div>
+          <div><label class="text-xs font-medium text-gray-600 block mb-1">Dokter *</label><select id="regDokter" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Dokter...</option></select></div>
+          <div><label class="text-xs font-medium text-gray-600 block mb-1">Tanggal Kunjungan *</label><input type="date" id="regTanggal" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div><label class="text-xs font-medium text-gray-600 block mb-1">Keluhan *</label><textarea id="regKeluhan" rows="2" placeholder="Keluhan utama..." class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none"></textarea></div>
+          <button onclick="submitPendaftaran()" class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-primary-dark transition text-sm">Daftar Berobat</button>
+          <p class="text-center text-xs text-gray-400">Sudah punya akun? <button onclick="showPage('login')" class="text-primary font-medium">Masuk</button></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- end publicSite -->
+<!-- ====================== PORTAL PASIEN ====================== -->
+<div id="portalPasien" style="display:none; min-height:100vh; background:#f6faff;">
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 bg-accent rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-white text-[20px] filled">person</span></div>
+        <div>
+          <div class="font-display font-bold text-gray-800 text-sm" id="portalPasienNama">Portal Pasien</div>
+          <div class="text-xs text-gray-400">Klinik Pratama</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="showPortal('riwayat')" id="ptab-riwayat" class="portal-tab text-sm font-medium text-primary border-b-2 border-primary pb-1 px-2">Riwayat</button>
+        <button onclick="showPortal('rekammedis')" id="ptab-rekammedis" class="portal-tab text-sm font-medium text-gray-500 pb-1 px-2">Rekam Medis</button>
+        <button onclick="showPortal('tagihan')" id="ptab-tagihan" class="portal-tab text-sm font-medium text-gray-500 pb-1 px-2">Tagihan</button>
+        <button onclick="daftarDariPortal()" class="text-sm bg-accent text-white font-semibold px-3 py-1.5 rounded-lg hover:bg-green-700 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">add</span>Daftar</button>
+        <button onclick="logoutPasien()" class="text-sm text-red-500 font-medium hover:text-red-700 flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">logout</span>Keluar</button>
+      </div>
+    </div>
+  </nav>
+  <div class="pt-20 max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div id="portal-riwayat" class="portal-section">
+      <h2 class="font-display font-bold text-xl text-gray-900 mb-6">Riwayat Pendaftaran</h2>
+      <div id="portalRiwayatList" class="space-y-4"></div>
+    </div>
+    <div id="portal-rekammedis" class="portal-section" style="display:none">
+      <h2 class="font-display font-bold text-xl text-gray-900 mb-6">Rekam Medis Saya</h2>
+      <div id="portalRekamMedisList" class="space-y-4"></div>
+    </div>
+    <div id="portal-tagihan" class="portal-section" style="display:none">
+      <h2 class="font-display font-bold text-xl text-gray-900 mb-6">Tagihan Saya</h2>
+      <div id="portalTagihanList" class="space-y-4"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ====================== ADMIN PANEL ====================== -->
+<div id="adminPanel" style="min-height:100vh;display:none">
+  <div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r border-gray-100 flex flex-col fixed top-0 left-0 bottom-0 z-40">
+    <div class="p-5 border-b border-gray-100">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-white text-[20px] filled">local_hospital</span></div>
+        <div><div class="font-display font-bold text-primary-dark text-sm">Klinik Pratama</div><div class="text-xs text-gray-400">Admin Panel</div></div>
+      </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-2">Menu Utama</div>
+      <button onclick="showAdmin('dashboard')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-dashboard"><span class="material-symbols-outlined text-[20px] text-gray-400">dashboard</span> Dashboard</button>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-2 mt-3">Data Master</div>
+      <button onclick="showAdmin('pasien')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-pasien"><span class="material-symbols-outlined text-[20px] text-gray-400">groups</span> Data Pasien</button>
+      <button onclick="showAdmin('dokter')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-dokter"><span class="material-symbols-outlined text-[20px] text-gray-400">stethoscope</span> Data Dokter</button>
+      <button onclick="showAdmin('layanan')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-layanan"><span class="material-symbols-outlined text-[20px] text-gray-400">medical_services</span> Layanan</button>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-2 mt-3">Operasional</div>
+      <button onclick="showAdmin('pendaftaran')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-pendaftaran"><span class="material-symbols-outlined text-[20px] text-gray-400">event_available</span> Pendaftaran</button>
+      <button onclick="showAdmin('jadwal')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-jadwal"><span class="material-symbols-outlined text-[20px] text-gray-400">calendar_month</span> Jadwal Dokter</button>
+      <button onclick="showAdmin('rekammedis')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-rekammedis"><span class="material-symbols-outlined text-[20px] text-gray-400">folder_open</span> Rekam Medis</button>
+      <button onclick="showAdmin('obat')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-obat"><span class="material-symbols-outlined text-[20px] text-gray-400">medication</span> Data Obat</button>
+      <button onclick="showAdmin('pesan')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-pesan"><span class="material-symbols-outlined text-[20px] text-gray-400">mail</span> Pesan Kontak <span id="pesanBadge" class="ml-auto bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 hidden">0</span></button>
+      <button onclick="showAdmin('billing')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-billing"><span class="material-symbols-outlined text-[20px] text-gray-400">receipt_long</span> Billing & Tagihan</button>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-2 mt-3">Pengaturan</div>
+      <button onclick="showAdmin('users')" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50" id="sb-users"><span class="material-symbols-outlined text-[20px] text-gray-400">manage_accounts</span> Manajemen User</button>
+    </nav>
+    <div class="p-3 border-t border-gray-100">
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50"><span class="material-symbols-outlined text-[20px]">logout</span> Keluar</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-64 flex-1 flex flex-col min-h-screen bg-surface">
+    <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+      <div><h2 id="adminPageTitle" class="font-display font-bold text-lg text-gray-900">Dashboard</h2><p id="adminPageSub" class="text-sm text-gray-400">Ringkasan data klinik hari ini</p></div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2"><div class="w-7 h-7 bg-primary rounded-lg flex items-center justify-center"><span class="material-symbols-outlined text-white text-[16px]">person</span></div><span class="text-sm font-medium text-gray-700" id="adminUserName">Administrator</span></div>
+      </div>
+    </header>
+
+    <div class="flex-1 p-6">
+
+      <!-- DASHBOARD -->
+      <div id="admin-dashboard" class="admin-section active">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-primary filled text-[22px]">groups</span></div></div><div class="text-2xl font-bold stat-counter" id="statTotalPasien">0</div><div class="text-sm text-gray-400">Total Pasien</div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-accent filled text-[22px]">stethoscope</span></div></div><div class="text-2xl font-bold stat-counter" id="statTotalDokter">0</div><div class="text-sm text-gray-400">Total Dokter</div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-yellow-500 filled text-[22px]">event_available</span></div></div><div class="text-2xl font-bold stat-counter" id="statPendaftaranHariIni">0</div><div class="text-sm text-gray-400">Pendaftaran Hari Ini</div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-purple-500 filled text-[22px]">medical_services</span></div></div><div class="text-2xl font-bold stat-counter" id="statTotalLayanan">0</div><div class="text-sm text-gray-400">Total Layanan Aktif</div></div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex items-center justify-between"><h3 class="font-semibold text-gray-800">Pendaftaran Terbaru</h3><button onclick="showAdmin('pendaftaran')" class="text-xs text-primary font-medium hover:underline">Lihat Semua</button></div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No. Reg</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Pasien</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Layanan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Dokter</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tanggal</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th></tr></thead><tbody id="dashRecentTable"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- PASIEN -->
+      <div id="admin-pasien" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 flex-1 min-w-0"><span class="material-symbols-outlined text-gray-400">search</span><input type="text" id="searchPasien" placeholder="Cari nama, NIK, telepon..." class="flex-1 text-sm outline-none" oninput="renderPasienTable()"/></div>
+            <button onclick="openModalPasien()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">person_add</span> Tambah Pasien</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Nama</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">NIK</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tgl Lahir</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Telepon</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Jenis Kelamin</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="pasienTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="pasienCount"></div>
+        </div>
+      </div>
+
+      <!-- DOKTER -->
+      <div id="admin-dokter" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 flex-1 min-w-0"><span class="material-symbols-outlined text-gray-400">search</span><input type="text" id="searchDokter" placeholder="Cari dokter..." class="flex-1 text-sm outline-none" oninput="renderDokterTable()"/></div>
+            <button onclick="openModalDokter()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">person_add</span> Tambah Dokter</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Nama</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Spesialisasi</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Layanan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Telepon</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="dokterTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="dokterCount"></div>
+        </div>
+      </div>
+
+      <!-- LAYANAN -->
+      <div id="admin-layanan" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <h3 class="font-semibold text-gray-800">Daftar Layanan</h3>
+            <button onclick="openModalLayanan()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">add</span> Tambah Layanan</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Nama Layanan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Deskripsi</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Ikon</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="layananTable"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- PENDAFTARAN -->
+      <div id="admin-pendaftaran" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 flex-1 min-w-0"><span class="material-symbols-outlined text-gray-400">search</span><input type="text" id="searchPendaftaran" placeholder="Cari pendaftaran..." class="flex-1 text-sm outline-none" oninput="renderPendaftaranTable()"/></div>
+            <select id="filterStatusPendaftaran" onchange="renderPendaftaranTable()" class="border border-gray-200 rounded-xl px-3 py-2 text-sm"><option value="">Semua Status</option><option>Menunggu</option><option>Diproses</option><option>Selesai</option><option>Dibatalkan</option></select>
+            <button onclick="openModalPendaftaran()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">add</span> Tambah</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No. Reg</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Pasien</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Layanan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Dokter</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tanggal</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Keluhan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="pendaftaranTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="pendaftaranCount"></div>
+        </div>
+      </div>
+
+      <!-- JADWAL -->
+      <div id="admin-jadwal" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <h3 class="font-semibold text-gray-800">Jadwal Praktik Dokter</h3>
+            <button onclick="openModalJadwal()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">add</span> Tambah Jadwal</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Dokter</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Hari</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Jam Mulai</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Jam Selesai</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Kuota</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="jadwalTable2"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- REKAM MEDIS -->
+      <div id="admin-rekammedis" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 flex-1 min-w-0"><span class="material-symbols-outlined text-gray-400">search</span><input type="text" id="searchRekamMedis" placeholder="Cari pasien atau dokter..." class="flex-1 text-sm outline-none" oninput="renderRekamMedisTable()"/></div>
+            <button onclick="openModalRekamMedis()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">add</span> Tambah Rekam Medis</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tanggal</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Pasien</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Dokter</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Diagnosis</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tekanan Darah</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="rekamMedisTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="rekamMedisCount"></div>
+        </div>
+      </div>
+
+      <!-- OBAT -->
+      <div id="admin-obat" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 flex-1 min-w-0"><span class="material-symbols-outlined text-gray-400">search</span><input type="text" id="searchObat" placeholder="Cari nama obat..." class="flex-1 text-sm outline-none" oninput="renderObatTable()"/></div>
+            <button onclick="openModalObat()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">add</span> Tambah Obat</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Nama Obat</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Kategori</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Satuan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Stok</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Harga</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="obatTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="obatCount"></div>
+        </div>
+      </div>
+
+      <!-- PESAN -->
+      <div id="admin-pesan" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <h3 class="font-semibold text-gray-800">Pesan Masuk dari Pengunjung</h3>
+            <button onclick="deleteAllPesan()" class="flex items-center gap-2 bg-red-50 text-red-500 text-sm font-medium px-4 py-2 rounded-xl hover:bg-red-100"><span class="material-symbols-outlined text-[18px]">delete_sweep</span> Hapus Semua</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Nama</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Email</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Subjek</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Pesan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tanggal</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="pesanTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="pesanCount"></div>
+        </div>
+      </div>
+
+      <!-- BILLING & TAGIHAN -->
+      <div id="admin-billing" class="admin-section">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined text-green-500 filled text-[22px]">payments</span></div><div class="text-2xl font-bold" id="billingLunas">0</div><div class="text-sm text-gray-400">Tagihan Lunas</div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined text-yellow-500 filled text-[22px]">pending</span></div><div class="text-2xl font-bold" id="billingBelumLunas">0</div><div class="text-sm text-gray-400">Belum Lunas</div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined text-primary filled text-[22px]">account_balance_wallet</span></div><div class="text-lg font-bold" id="billingTotalPendapatan">Rp 0</div><div class="text-sm text-gray-400">Total Pendapatan</div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm"><div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined text-purple-500 filled text-[22px]">today</span></div><div class="text-lg font-bold" id="billingHariIni">Rp 0</div><div class="text-sm text-gray-400">Pendapatan Hari Ini</div></div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 flex-1 min-w-0"><span class="material-symbols-outlined text-gray-400">search</span><input type="text" id="searchBilling" placeholder="Cari tagihan pasien..." class="flex-1 text-sm outline-none" oninput="renderBillingTable()"/></div>
+            <select id="filterStatusBilling" onchange="renderBillingTable()" class="border border-gray-200 rounded-xl px-3 py-2 text-sm"><option value="">Semua Status</option><option>Belum Lunas</option><option>Lunas</option><option>Dibatalkan</option></select>
+            <button onclick="openModalBilling()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">add</span> Buat Tagihan</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No. Tagihan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Pasien</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Layanan</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Total</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Metode</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Tanggal</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="billingTable"></tbody></table></div>
+          <div class="px-6 py-3 border-t text-sm text-gray-400" id="billingCount"></div>
+        </div>
+      </div>
+
+      <!-- MANAJEMEN USER -->
+      <div id="admin-users" class="admin-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b flex flex-wrap gap-3 items-center justify-between">
+            <h3 class="font-semibold text-gray-800">Daftar Akun Admin</h3>
+            <button onclick="openModalUser()" class="flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-primary-dark"><span class="material-symbols-outlined text-[18px]">person_add</span> Tambah User</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 text-left"><tr><th class="px-6 py-3 text-xs font-semibold text-gray-500">No.</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Nama</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Username</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Role</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Hak Akses</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Status</th><th class="px-6 py-3 text-xs font-semibold text-gray-500">Aksi</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  </div>
+</div>
+
+<script>
+// ==================== PHP/MySQL API LAYER ====================
+// Menggantikan IndexedDB — semua data tersimpan di MySQL via api.php
+const API_URL = 'api.php';
+
+async function apiCall(store, action, body = null) {
+  const url = `${API_URL}?store=${store}&action=${action}`;
+  const opts = body !== null
+    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    : { method: 'GET' };
+  const res  = await fetch(url, opts);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.msg || 'API error');
+  return json.data;
+}
+
+async function dbGetAll(store) {
+  return await apiCall(store, 'getAll');
+}
+
+async function dbPut(store, obj) {
+  return await apiCall(store, 'put', obj);
+}
+
+async function dbDelete(store, id) {
+  return await apiCall(store, 'delete', { id });
+}
+
+async function dbClear(store) {
+  return await apiCall(store, 'clear', {});
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function genRegNo() { return 'REG-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*9000)+1000); }
+
+// ==================== DEFAULT DATA ====================
+async function initDefaultData() {
+  // Data default sudah ada di MySQL (klinik_pratama.sql) — tidak perlu seed.
+}
+
+// ==================== NAVIGATION ====================
+function showPage(page) {
+  // Show publicSite, hide other panels
+  var ps = document.getElementById('publicSite');
+  var ap = document.getElementById('adminPanel');
+  var pp = document.getElementById('portalPasien');
+  if (ps) ps.style.display = 'block';
+  if (ap) ap.style.display = 'none';
+  if (pp) pp.style.display = 'none';
+  document.querySelectorAll('[data-page]').forEach(function(el){ el.classList.remove('active'); });
+  var el = document.querySelector('[data-page="' + page + '"]');
+  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+  document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active-nav'); });
+  var navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active-nav');
+  if (page === 'daftar') populateDaftarDropdowns();
+  if (page === 'dokter') renderPublicDokter();
+  if (page === 'layanan') renderPublicLayanan();
+  if (page === 'jadwal') renderPublicJadwal();
+}
+
+function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); }
+function togglePassword(id) { const el=document.getElementById(id); el.type=el.type==='password'?'text':'password'; }
+
+// ==================== AUTH ====================
+let currentAdmin = null;
+let currentPasien = null;
+let loginMode = 'admin';
+
+function switchLoginTab(mode) {
+  loginMode = mode;
+  if (mode === 'admin') {
+    document.getElementById('loginTabAdmin').classList.add('bg-white','shadow','text-primary'); document.getElementById('loginTabAdmin').classList.remove('text-gray-500');
+    document.getElementById('loginTabPasien').classList.remove('bg-white','shadow','text-primary'); document.getElementById('loginTabPasien').classList.add('text-gray-500');
+    document.getElementById('loginFormAdmin').classList.remove('hidden');
+    document.getElementById('loginFormPasien').classList.add('hidden');
+  } else {
+    document.getElementById('loginTabPasien').classList.add('bg-white','shadow','text-primary'); document.getElementById('loginTabPasien').classList.remove('text-gray-500');
+    document.getElementById('loginTabAdmin').classList.remove('bg-white','shadow','text-primary'); document.getElementById('loginTabAdmin').classList.add('text-gray-500');
+    document.getElementById('loginFormPasien').classList.remove('hidden');
+    document.getElementById('loginFormAdmin').classList.add('hidden');
+  }
+}
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  if (!user || !pass) { showToast('Isi username dan password!','error'); return; }
+  try {
+    const found = await apiCall('adminusers', 'login', { username: user, password: pass });
+    if (found) {
+      currentAdmin = found;
+      document.getElementById('publicSite').style.display = 'none';
+      document.getElementById('portalPasien').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      const nameEl = document.getElementById('adminUserName');
+      if (nameEl) nameEl.textContent = found.nama;
+      applyRoleRestrictions(found.hakAkses);
+      showAdmin('dashboard');
+      showToast('Selamat datang, ' + found.nama + '!', 'success');
+    }
+  } catch(e) {
+    showToast(e.message || 'Username atau password salah!', 'error');
+  }
+}
+
+function applyRoleRestrictions(hakAkses) {
+  const allMenus = ['dashboard','pasien','dokter','layanan','pendaftaran','jadwal','rekammedis','obat','pesan','billing','users'];
+  allMenus.forEach(m => {
+    const btn = document.getElementById('sb-' + m);
+    if (btn) btn.style.display = hakAkses.includes(m) ? '' : 'none';
+  });
+}
+
+async function doLoginPasien() {
+  const nik = document.getElementById('loginNIK').value.trim();
+  const ttl = document.getElementById('loginTTL').value;
+  const namaInput = (document.getElementById('loginNamaP').value || '').trim();
+  if (!nik || !ttl) { showToast('Isi NIK dan tanggal lahir!', 'error'); return; }
+  if (nik.length !== 16) { showToast('NIK harus 16 digit!', 'error'); return; }
+  try {
+    const found = await apiCall('pasien', 'loginPasien', { nik, ttl, nama: namaInput });
+    currentPasien = found;
+    document.getElementById('loginNamaP').value = '';
+    document.getElementById('loginNIK').value = '';
+    document.getElementById('loginTTL').value = '';
+    document.getElementById('publicSite').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('portalPasien').style.display = 'block';
+    document.getElementById('portalPasienNama').textContent = found.nama;
+    showPortal('riwayat');
+    showToast('Selamat datang, ' + found.nama + '!', 'success');
+  } catch(e) {
+    showToast(e.message || 'Data tidak ditemukan.', 'error');
+  }
+}
+
+async function showAkunList() {
+  const box = document.getElementById('akunListBox');
+  if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
+  const users = await dbGetAll('adminusers');
+  const aktif = users.filter(function(u){ return u.status === 'Aktif'; });
+  if (!aktif.length) {
+    box.innerHTML = '<p class="text-xs text-gray-400 text-center">Tidak ada akun aktif.</p>';
+  } else {
+    box.innerHTML = '<p class="text-xs font-semibold text-gray-500 mb-2">Akun tersimpan (klik untuk isi otomatis):</p>' +
+      aktif.map(function(u){
+        return '<button type="button" onclick="pilihAkun(\'' + u.username + '\',\'' + u.password + '\')" class="w-full flex items-center justify-between bg-white rounded-lg px-3 py-2 text-xs hover:bg-primary-light border border-gray-100 transition">' +
+          '<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px] text-primary">person</span><span class="font-mono font-semibold">' + u.username + '</span></span>' +
+          '<span class="badge bg-gray-100 text-gray-500">' + u.role + '</span></button>';
+      }).join('');
+  }
+  box.classList.remove('hidden');
+}
+
+function pilihAkun(username, password) {
+  document.getElementById('loginUser').value = username;
+  document.getElementById('loginPass').value = password;
+  document.getElementById('akunListBox').classList.add('hidden');
+  showToast('Akun dipilih. Klik Masuk untuk login.', 'info');
+}
+
+function logout() {
+  currentAdmin = null;
+  document.getElementById('adminPanel').style.display = 'none';
+  const allMenus = ['dashboard','pasien','dokter','layanan','pendaftaran','jadwal','rekammedis','obat','pesan','billing','users'];
+  allMenus.forEach(function(m){ var btn=document.getElementById('sb-'+m); if(btn) btn.style.display=''; });
+  showPage('home');
+  showToast('Berhasil keluar dari sistem.', 'info');
+}
+
+function logoutPasien() {
+  currentPasien = null;
+  document.getElementById('portalPasien').style.display = 'none';
+  showPage('home');
+  showToast('Berhasil keluar dari portal pasien.', 'info');
+}
+
+// ==================== ADMIN NAVIGATION ====================
+function showAdmin(section) {
+  document.querySelectorAll('.admin-section').forEach(el => { el.classList.remove('active'); el.style.display='none'; });
+  const el = document.getElementById('admin-' + section);
+  if (el) { el.classList.add('active'); el.style.display='block'; }
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const sb = document.getElementById('sb-' + section);
+  if (sb) sb.classList.add('active');
+  const titles = {dashboard:'Dashboard',pasien:'Data Pasien',dokter:'Data Dokter',layanan:'Layanan',pendaftaran:'Pendaftaran',jadwal:'Jadwal Dokter',rekammedis:'Rekam Medis',obat:'Data Obat',pesan:'Pesan Kontak',billing:'Billing & Tagihan',users:'Manajemen User'};
+  const subs = {dashboard:'Ringkasan data klinik hari ini',pasien:'Kelola data pasien terdaftar',dokter:'Kelola data dokter',layanan:'Kelola layanan klinik',pendaftaran:'Kelola pendaftaran pasien',jadwal:'Kelola jadwal praktik dokter',rekammedis:'Riwayat pemeriksaan pasien',obat:'Manajemen stok obat apotek',pesan:'Pesan dari pengunjung website',billing:'Tagihan dan transaksi pembayaran',users:'Kelola akun admin dan hak akses'};
+  document.getElementById('adminPageTitle').textContent = titles[section]||'Admin';
+  document.getElementById('adminPageSub').textContent = subs[section]||'';
+  const renders = {dashboard:renderDashboard,pasien:renderPasienTable,dokter:renderDokterTable,layanan:renderLayananTable,pendaftaran:renderPendaftaranTable,jadwal:renderJadwalTable,rekammedis:renderRekamMedisTable,obat:renderObatTable,pesan:renderPesanTable,billing:renderBillingSection,users:renderUsersTable};
+  if (renders[section]) renders[section]();
+}
+
+// ==================== TOAST ====================
+function showToast(msg, type='success') {
+  const colors={success:'bg-green-500',error:'bg-red-500',info:'bg-blue-500',warn:'bg-yellow-500'};
+  const icons={success:'check_circle',error:'error',info:'info',warn:'warning'};
+  const t = document.createElement('div');
+  t.className = `toast flex items-center gap-3 text-white px-4 py-3 rounded-xl shadow-lg ${colors[type]} min-w-[260px] max-w-xs`;
+  t.innerHTML = `<span class="material-symbols-outlined filled text-[20px]">${icons[type]}</span><span class="text-sm font-medium flex-1">${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ==================== MODAL ====================
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  const m = document.getElementById('modal');
+  m.style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+// ==================== HELPERS ====================
+function statusBadge(status) {
+  const map={Menunggu:'bg-yellow-100 text-yellow-700',Diproses:'bg-blue-100 text-blue-700',Selesai:'bg-green-100 text-green-700',Dibatalkan:'bg-red-100 text-red-600'};
+  return `<span class="badge ${map[status]||'bg-gray-100 text-gray-600'}">${status}</span>`;
+}
+function formatDate(s) {
+  if (!s) return '-';
+  try { return new Date(s+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}); }
+  catch { return s; }
+}
+function formatRupiah(n) { return 'Rp '+Number(n).toLocaleString('id-ID'); }
+const colorMap={blue:'bg-blue-50 text-blue-600',green:'bg-green-50 text-green-600',purple:'bg-purple-50 text-purple-600',yellow:'bg-yellow-50 text-yellow-600',red:'bg-red-50 text-red-500',orange:'bg-orange-50 text-orange-500',teal:'bg-teal-50 text-teal-600',pink:'bg-pink-50 text-pink-600'};
+const iconList=['medical_services','dentistry','child_care','science','radiology','emergency','vaccines','psychology','orthopedics','cardiology','ophthalmology','dermatology','medication'];
+
+// ==================== DASHBOARD ====================
+async function renderDashboard() {
+  const [pasien,dokter,layanan,pendaftaran] = await Promise.all([dbGetAll('pasien'),dbGetAll('dokter'),dbGetAll('layanan'),dbGetAll('pendaftaran')]);
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('statTotalPasien').textContent = pasien.length;
+  document.getElementById('statTotalDokter').textContent = dokter.length;
+  document.getElementById('statPendaftaranHariIni').textContent = pendaftaran.filter(p=>p.tanggal===today).length;
+  document.getElementById('statTotalLayanan').textContent = layanan.filter(l=>l.status==='Aktif').length;
+  const recent = [...pendaftaran].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,5);
+  document.getElementById('dashRecentTable').innerHTML = recent.length ? recent.map(r=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm font-medium text-primary">${r.noReg}</td>
+      <td class="px-6 py-4 text-sm text-gray-700">${r.pasienNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${r.layananNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${r.dokterNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${formatDate(r.tanggal)}</td>
+      <td class="px-6 py-4">${statusBadge(r.status)}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">Belum ada pendaftaran</td></tr>';
+  // pesan badge
+  const pesan = await dbGetAll('pesan');
+  const unread = pesan.filter(p=>!p.dibaca).length;
+  const badge = document.getElementById('pesanBadge');
+  if (unread > 0) { badge.textContent = unread; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+// ==================== PASIEN CRUD ====================
+async function renderPasienTable() {
+  const q = (document.getElementById('searchPasien')?.value||'').toLowerCase();
+  let data = await dbGetAll('pasien');
+  if (q) data = data.filter(p=>p.nama.toLowerCase().includes(q)||p.nik.includes(q)||p.telepon.includes(q));
+  document.getElementById('pasienCount').textContent = `Menampilkan ${data.length} pasien`;
+  document.getElementById('pasienTable').innerHTML = data.length ? data.map((p,i)=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary font-semibold text-sm">${p.nama[0]}</div><span class="text-sm font-medium text-gray-800">${p.nama}</span></div></td>
+      <td class="px-6 py-4 text-sm text-gray-600 font-mono">${p.nik}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${formatDate(p.ttl)}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${p.telepon}</td>
+      <td class="px-6 py-4"><span class="badge ${p.jk==='Laki-laki'?'bg-blue-100 text-blue-700':'bg-pink-100 text-pink-700'}">${p.jk}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="openModalPasien('${p.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        <button onclick="deletePasien('${p.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+        <button onclick="viewRekamMedisPasien('${p.id}','${p.nama}')" class="text-xs text-green-600 hover:underline font-medium">Rekam Medis</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data</td></tr>';
+}
+
+function openModalPasien(id=null) {
+  const doOpen = async () => {
+    const p = id ? (await dbGetAll('pasien')).find(x=>x.id===id) : null;
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${p?'Edit':'Tambah'} Pasien</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Nama Lengkap *</label><input id="mPNama" value="${p?.nama||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Nama lengkap"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">NIK *</label><input id="mPNIK" value="${p?.nik||''}" maxlength="16" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono" placeholder="16 digit NIK"/></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Tanggal Lahir *</label><input type="date" id="mPTTL" value="${p?.ttl||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Jenis Kelamin *</label><select id="mPJK" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${p?.jk==='Laki-laki'?'selected':''}>Laki-laki</option><option ${p?.jk==='Perempuan'?'selected':''}>Perempuan</option></select></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Telepon *</label><input id="mPTelp" value="${p?.telepon||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="08xx-xxxx-xxxx"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Email</label><input type="email" id="mPEmail" value="${p?.email||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Alamat</label><textarea id="mPAlamat" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${p?.alamat||''}</textarea></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="savePasien('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function savePasien(id) {
+  const nama=document.getElementById('mPNama').value.trim();
+  const nik=document.getElementById('mPNIK').value.trim();
+  const ttl=document.getElementById('mPTTL').value;
+  const jk=document.getElementById('mPJK').value;
+  const telepon=document.getElementById('mPTelp').value.trim();
+  if (!nama||!nik||!ttl||!jk||!telepon) return showToast('Lengkapi semua field wajib!','error');
+  if (nik.length!==16) return showToast('NIK harus 16 digit!','error');
+  const obj={id:id||genId(),nama,nik,ttl,jk,telepon,email:document.getElementById('mPEmail').value,alamat:document.getElementById('mPAlamat').value};
+  await dbPut('pasien',obj);
+  showToast(id?'Pasien diperbarui!':'Pasien ditambahkan!','success');
+  closeModal(); renderPasienTable();
+}
+
+async function deletePasien(id) {
+  if (!confirm('Hapus data pasien ini?')) return;
+  await dbDelete('pasien',id);
+  showToast('Pasien dihapus.','info'); renderPasienTable();
+}
+
+// ==================== DOKTER CRUD ====================
+async function renderDokterTable() {
+  const q = (document.getElementById('searchDokter')?.value||'').toLowerCase();
+  let data = await dbGetAll('dokter');
+  const layananList = await dbGetAll('layanan');
+  if (q) data = data.filter(d=>d.nama.toLowerCase().includes(q)||d.spesialisasi.toLowerCase().includes(q));
+  document.getElementById('dokterCount').textContent = `Menampilkan ${data.length} dokter`;
+  document.getElementById('dokterTable').innerHTML = data.length ? data.map((d,i)=>{
+    const lNama = layananList.find(l=>l.id===d.layananId)?.nama||'-';
+    return `<tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-accent font-semibold text-sm">${d.nama[0]}</div><span class="text-sm font-medium text-gray-800">${d.nama}</span></div></td>
+      <td class="px-6 py-4 text-sm text-gray-600">${d.spesialisasi}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${lNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${d.telepon}</td>
+      <td class="px-6 py-4"><span class="badge ${d.status==='Aktif'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${d.status}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="openModalDokter('${d.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        <button onclick="deleteDokter('${d.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data</td></tr>';
+}
+
+function openModalDokter(id=null) {
+  const doOpen = async () => {
+    const d = id ? (await dbGetAll('dokter')).find(x=>x.id===id) : null;
+    const layananList = await dbGetAll('layanan');
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${d?'Edit':'Tambah'} Dokter</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Nama Lengkap *</label><input id="mDNama" value="${d?.nama||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="dr. Nama Dokter"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Spesialisasi *</label><input id="mDSpesialis" value="${d?.spesialisasi||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Dokter Umum / Sp.A / dst"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Layanan *</label><select id="mDLayanan" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Layanan</option>${layananList.map(l=>`<option value="${l.id}" ${d?.layananId===l.id?'selected':''}>${l.nama}</option>`).join('')}</select></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Telepon *</label><input id="mDTelp" value="${d?.telepon||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Email</label><input type="email" id="mDEmail" value="${d?.email||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Hari Praktik</label><input id="mDHari" value="${d?.hari||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Senin, Rabu, Jumat"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Jam Praktik</label><input id="mDJam" value="${d?.jam||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="08:00-14:00"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Status</label><select id="mDStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${d?.status!=='Tidak Aktif'?'selected':''}>Aktif</option><option ${d?.status==='Tidak Aktif'?'selected':''}>Tidak Aktif</option></select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Bio Singkat</label><textarea id="mDBio" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${d?.bio||''}</textarea></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveDokter('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function saveDokter(id) {
+  const nama=document.getElementById('mDNama').value.trim();
+  const spesialisasi=document.getElementById('mDSpesialis').value.trim();
+  const layananId=document.getElementById('mDLayanan').value;
+  const telepon=document.getElementById('mDTelp').value.trim();
+  if (!nama||!spesialisasi||!layananId||!telepon) return showToast('Lengkapi semua field wajib!','error');
+  const obj={id:id||genId(),nama,spesialisasi,layananId,telepon,email:document.getElementById('mDEmail').value,hari:document.getElementById('mDHari').value,jam:document.getElementById('mDJam').value,status:document.getElementById('mDStatus').value,bio:document.getElementById('mDBio').value};
+  await dbPut('dokter',obj);
+  showToast(id?'Dokter diperbarui!':'Dokter ditambahkan!','success');
+  closeModal(); renderDokterTable();
+}
+
+async function deleteDokter(id) {
+  if (!confirm('Hapus data dokter ini?')) return;
+  await dbDelete('dokter',id);
+  showToast('Dokter dihapus.','info'); renderDokterTable();
+}
+
+// ==================== LAYANAN CRUD ====================
+async function renderLayananTable() {
+  const data = await dbGetAll('layanan');
+  document.getElementById('layananTable').innerHTML = data.length ? data.map((l,i)=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-800">${l.nama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">${l.deskripsi}</td>
+      <td class="px-6 py-4"><span class="material-symbols-outlined text-primary filled">${l.icon}</span></td>
+      <td class="px-6 py-4"><span class="badge ${l.status==='Aktif'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${l.status}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="openModalLayanan('${l.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        <button onclick="deleteLayanan('${l.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data</td></tr>';
+}
+
+function openModalLayanan(id=null) {
+  const doOpen = async () => {
+    const l = id ? (await dbGetAll('layanan')).find(x=>x.id===id) : null;
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${l?'Edit':'Tambah'} Layanan</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Nama Layanan *</label><input id="mLNama" value="${l?.nama||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Deskripsi *</label><textarea id="mLDeskripsi" rows="3" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${l?.deskripsi||''}</textarea></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Ikon</label><select id="mLIcon" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm">${iconList.map(ic=>`<option value="${ic}" ${l?.icon===ic?'selected':''}>${ic}</option>`).join('')}</select></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Warna</label><select id="mLWarna" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="blue" ${l?.warna==='blue'?'selected':''}>Biru</option><option value="green" ${l?.warna==='green'?'selected':''}>Hijau</option><option value="purple" ${l?.warna==='purple'?'selected':''}>Ungu</option><option value="yellow" ${l?.warna==='yellow'?'selected':''}>Kuning</option><option value="red" ${l?.warna==='red'?'selected':''}>Merah</option><option value="orange" ${l?.warna==='orange'?'selected':''}>Oranye</option><option value="teal" ${l?.warna==='teal'?'selected':''}>Teal</option><option value="pink" ${l?.warna==='pink'?'selected':''}>Pink</option></select></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Status</label><select id="mLStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${l?.status!=='Tidak Aktif'?'selected':''}>Aktif</option><option ${l?.status==='Tidak Aktif'?'selected':''}>Tidak Aktif</option></select></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveLayanan('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function saveLayanan(id) {
+  const nama=document.getElementById('mLNama').value.trim();
+  const deskripsi=document.getElementById('mLDeskripsi').value.trim();
+  if (!nama||!deskripsi) return showToast('Lengkapi semua field!','error');
+  const obj={id:id||genId(),nama,deskripsi,icon:document.getElementById('mLIcon').value,warna:document.getElementById('mLWarna').value,status:document.getElementById('mLStatus').value};
+  await dbPut('layanan',obj);
+  showToast(id?'Layanan diperbarui!':'Layanan ditambahkan!','success');
+  closeModal(); renderLayananTable();
+}
+
+async function deleteLayanan(id) {
+  if (!confirm('Hapus layanan ini?')) return;
+  await dbDelete('layanan',id);
+  showToast('Layanan dihapus.','info'); renderLayananTable();
+}
+
+// ==================== PENDAFTARAN CRUD ====================
+async function renderPendaftaranTable() {
+  const q = (document.getElementById('searchPendaftaran')?.value||'').toLowerCase();
+  const fs = document.getElementById('filterStatusPendaftaran')?.value||'';
+  let data = await dbGetAll('pendaftaran');
+  if (q) data = data.filter(r=>r.noReg.toLowerCase().includes(q)||r.pasienNama.toLowerCase().includes(q)||r.dokterNama.toLowerCase().includes(q));
+  if (fs) data = data.filter(r=>r.status===fs);
+  data = [...data].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('pendaftaranCount').textContent = `Menampilkan ${data.length} pendaftaran`;
+  document.getElementById('pendaftaranTable').innerHTML = data.length ? data.map(r=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm font-medium text-primary">${r.noReg}</td>
+      <td class="px-6 py-4 text-sm text-gray-800">${r.pasienNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${r.layananNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${r.dokterNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${formatDate(r.tanggal)}</td>
+      <td class="px-6 py-4 text-sm text-gray-600 max-w-[160px] truncate" title="${r.keluhan}">${r.keluhan}</td>
+      <td class="px-6 py-4">${statusBadge(r.status)}</td>
+      <td class="px-6 py-4"><div class="flex gap-2 flex-wrap">
+        <button onclick="updateStatusPendaftaran('${r.id}')" class="text-xs text-blue-600 hover:underline font-medium">Status</button>
+        <button onclick="openModalPendaftaran('${r.id}')" class="text-xs text-yellow-600 hover:underline font-medium">Edit</button>
+        <button onclick="deletePendaftaran('${r.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data</td></tr>';
+}
+
+async function updateStatusPendaftaran(id) {
+  const data = await dbGetAll('pendaftaran');
+  const reg = data.find(r=>r.id===id);
+  if (!reg) return;
+  const statuses = ['Menunggu','Diproses','Selesai','Dibatalkan'];
+  openModal(`
+    <div class="p-6">
+      <h3 class="font-display font-bold text-lg mb-4">Update Status</h3>
+      <p class="text-sm text-gray-500 mb-4">Pendaftaran: <strong>${reg.noReg}</strong> — ${reg.pasienNama}</p>
+      <div class="grid grid-cols-2 gap-2 mb-5">
+        ${statuses.map(s=>`<button onclick="setStatusPendaftaran('${id}','${s}')" class="py-3 rounded-xl text-sm font-medium border-2 ${reg.status===s?'border-primary bg-primary-light text-primary':'border-gray-200 text-gray-600 hover:border-primary'}">${s}</button>`).join('')}
+      </div>
+      <button onclick="closeModal()" class="w-full border border-gray-200 rounded-xl py-2.5 text-sm text-gray-500">Tutup</button>
+    </div>`);
+}
+
+async function setStatusPendaftaran(id, status) {
+  const data = await dbGetAll('pendaftaran');
+  const reg = data.find(r=>r.id===id);
+  if (reg) { reg.status = status; await dbPut('pendaftaran',reg); }
+  showToast(`Status diubah ke: ${status}`,'success');
+  closeModal(); renderPendaftaranTable();
+}
+
+function openModalPendaftaran(id=null) {
+  const doOpen = async () => {
+    const reg = id ? (await dbGetAll('pendaftaran')).find(x=>x.id===id) : null;
+    const pasienList = await dbGetAll('pasien');
+    const layananList = await dbGetAll('layanan');
+    const dokterList = await dbGetAll('dokter');
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${reg?'Edit':'Tambah'} Pendaftaran</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Pasien *</label><select id="mRegPasien" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Pasien</option>${pasienList.map(p=>`<option value="${p.id}|${p.nama}" ${reg?.pasienId===p.id?'selected':''}>${p.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Layanan *</label><select id="mRegLayanan" onchange="updateModalDokter()" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Layanan</option>${layananList.map(l=>`<option value="${l.id}|${l.nama}" ${reg?.layananId===l.id?'selected':''}>${l.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Dokter *</label><select id="mRegDokter" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Dokter</option>${dokterList.map(d=>`<option value="${d.id}|${d.nama}" ${reg?.dokterId===d.id?'selected':''}>${d.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Tanggal *</label><input type="date" id="mRegTgl" value="${reg?.tanggal||new Date().toISOString().split('T')[0]}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Keluhan *</label><textarea id="mRegKeluhan" rows="3" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${reg?.keluhan||''}</textarea></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="savePendaftaran('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function updateModalDokter() {
+  const layananId = document.getElementById('mRegLayanan').value.split('|')[0];
+  const dokterList = (await dbGetAll('dokter')).filter(d=>d.layananId===layananId);
+  document.getElementById('mRegDokter').innerHTML = '<option value="">Pilih Dokter</option>'+dokterList.map(d=>`<option value="${d.id}|${d.nama}">${d.nama}</option>`).join('');
+}
+
+async function savePendaftaran(id) {
+  const pVal=document.getElementById('mRegPasien').value.split('|');
+  const lVal=document.getElementById('mRegLayanan').value.split('|');
+  const dVal=document.getElementById('mRegDokter').value.split('|');
+  const tanggal=document.getElementById('mRegTgl').value;
+  const keluhan=document.getElementById('mRegKeluhan').value.trim();
+  if (!pVal[0]||!lVal[0]||!dVal[0]||!tanggal||!keluhan) return showToast('Lengkapi semua field!','error');
+  const obj={id:id||genId(),noReg:id?(await dbGetAll('pendaftaran')).find(r=>r.id===id)?.noReg||genRegNo():genRegNo(),pasienId:pVal[0],pasienNama:pVal[1],layananId:lVal[0],layananNama:lVal[1],dokterId:dVal[0],dokterNama:dVal[1],tanggal,keluhan,status:id?(await dbGetAll('pendaftaran')).find(r=>r.id===id)?.status||'Menunggu':'Menunggu',createdAt:id?(await dbGetAll('pendaftaran')).find(r=>r.id===id)?.createdAt||new Date().toISOString():new Date().toISOString()};
+  await dbPut('pendaftaran',obj);
+  showToast(id?'Pendaftaran diperbarui!':'Pendaftaran ditambahkan!','success');
+  closeModal(); renderPendaftaranTable();
+}
+
+async function deletePendaftaran(id) {
+  if (!confirm('Hapus data pendaftaran ini?')) return;
+  await dbDelete('pendaftaran',id);
+  showToast('Pendaftaran dihapus.','info'); renderPendaftaranTable();
+}
+
+// ==================== JADWAL CRUD ====================
+async function renderJadwalTable() {
+  const data = await dbGetAll('jadwal');
+  document.getElementById('jadwalTable2').innerHTML = data.length ? data.map((j,i)=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-800">${j.dokterNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${j.hari}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${j.jamMulai}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${j.jamSelesai}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${j.kuota} pasien</td>
+      <td class="px-6 py-4"><span class="badge ${j.status==='Aktif'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${j.status}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="openModalJadwal('${j.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        <button onclick="deleteJadwal('${j.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data</td></tr>';
+}
+
+function openModalJadwal(id=null) {
+  const doOpen = async () => {
+    const j = id ? (await dbGetAll('jadwal')).find(x=>x.id===id) : null;
+    const dokterList = await dbGetAll('dokter');
+    const hariList = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${j?'Edit':'Tambah'} Jadwal</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Dokter *</label><select id="mJDokter" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Dokter</option>${dokterList.map(d=>`<option value="${d.id}|${d.nama}" ${j?.dokterId===d.id?'selected':''}>${d.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Hari *</label><select id="mJHari" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm">${hariList.map(h=>`<option ${j?.hari===h?'selected':''}>${h}</option>`).join('')}</select></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Jam Mulai *</label><input type="time" id="mJMulai" value="${j?.jamMulai||'08:00'}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Jam Selesai *</label><input type="time" id="mJSelesai" value="${j?.jamSelesai||'14:00'}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Kuota Pasien</label><input type="number" id="mJKuota" value="${j?.kuota||20}" min="1" max="100" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Status</label><select id="mJStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${j?.status!=='Tidak Aktif'?'selected':''}>Aktif</option><option ${j?.status==='Tidak Aktif'?'selected':''}>Tidak Aktif</option></select></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveJadwal('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function saveJadwal(id) {
+  const dVal=document.getElementById('mJDokter').value.split('|');
+  const hari=document.getElementById('mJHari').value;
+  const jamMulai=document.getElementById('mJMulai').value;
+  const jamSelesai=document.getElementById('mJSelesai').value;
+  if (!dVal[0]||!hari||!jamMulai||!jamSelesai) return showToast('Lengkapi semua field!','error');
+  const obj={id:id||genId(),dokterId:dVal[0],dokterNama:dVal[1]||dVal[0],hari,jamMulai,jamSelesai,kuota:parseInt(document.getElementById('mJKuota').value)||20,status:document.getElementById('mJStatus').value};
+  await dbPut('jadwal',obj);
+  showToast(id?'Jadwal diperbarui!':'Jadwal ditambahkan!','success');
+  closeModal(); renderJadwalTable();
+}
+
+async function deleteJadwal(id) {
+  if (!confirm('Hapus jadwal ini?')) return;
+  await dbDelete('jadwal',id);
+  showToast('Jadwal dihapus.','info'); renderJadwalTable();
+}
+
+// ==================== REKAM MEDIS CRUD ====================
+async function renderRekamMedisTable() {
+  const q = (document.getElementById('searchRekamMedis')?.value||'').toLowerCase();
+  let data = await dbGetAll('rekammedis');
+  if (q) data = data.filter(r=>r.pasienNama.toLowerCase().includes(q)||r.dokterNama.toLowerCase().includes(q)||r.diagnosis.toLowerCase().includes(q));
+  data = [...data].sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+  document.getElementById('rekamMedisCount').textContent = `Menampilkan ${data.length} rekam medis`;
+  document.getElementById('rekamMedisTable').innerHTML = data.length ? data.map((r,i)=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${formatDate(r.tanggal)}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-800">${r.pasienNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${r.dokterNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600 max-w-[180px] truncate" title="${r.diagnosis}">${r.diagnosis}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${r.tekananDarah||'-'}</td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="viewRekamMedisDetail('${r.id}')" class="text-xs text-green-600 hover:underline font-medium">Detail</button>
+        <button onclick="openModalRekamMedis('${r.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        <button onclick="deleteRekamMedis('${r.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data rekam medis</td></tr>';
+}
+
+function openModalRekamMedis(id=null) {
+  const doOpen = async () => {
+    const rm = id ? (await dbGetAll('rekammedis')).find(x=>x.id===id) : null;
+    const pasienList = await dbGetAll('pasien');
+    const dokterList = await dbGetAll('dokter');
+    const obatList = await dbGetAll('obat');
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${rm?'Edit':'Tambah'} Rekam Medis</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Pasien *</label><select id="mRMPasien" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Pasien</option>${pasienList.map(p=>`<option value="${p.id}|${p.nama}" ${rm?.pasienId===p.id?'selected':''}>${p.nama}</option>`).join('')}</select></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Dokter *</label><select id="mRMDokter" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Dokter</option>${dokterList.map(d=>`<option value="${d.id}|${d.nama}" ${rm?.dokterId===d.id?'selected':''}>${d.nama}</option>`).join('')}</select></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Tanggal *</label><input type="date" id="mRMTgl" value="${rm?.tanggal||new Date().toISOString().split('T')[0]}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Keluhan</label><textarea id="mRMKeluhan" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${rm?.keluhan||''}</textarea></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Diagnosis *</label><textarea id="mRMDiagnosis" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${rm?.diagnosis||''}</textarea></div>
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Tekanan Darah</label><input id="mRMTekanan" value="${rm?.tekananDarah||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="120/80"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Suhu (°C)</label><input id="mRMSuhu" value="${rm?.suhu||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="36.5"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Berat (kg)</label><input id="mRMBerat" value="${rm?.berat||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="60"/></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Resep Obat</label><select id="mRMObat" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih obat (opsional)</option>${obatList.map(o=>`<option value="${o.id}|${o.nama}" ${rm?.obatId===o.id?'selected':''}>${o.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Catatan Dokter</label><textarea id="mRMCatatan" rows="3" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none">${rm?.catatan||''}</textarea></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveRekamMedis('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function saveRekamMedis(id) {
+  const pVal=document.getElementById('mRMPasien').value.split('|');
+  const dVal=document.getElementById('mRMDokter').value.split('|');
+  const tanggal=document.getElementById('mRMTgl').value;
+  const diagnosis=document.getElementById('mRMDiagnosis').value.trim();
+  if (!pVal[0]||!dVal[0]||!tanggal||!diagnosis) return showToast('Lengkapi field wajib!','error');
+  const obatVal=document.getElementById('mRMObat').value.split('|');
+  const obj={id:id||genId(),pasienId:pVal[0],pasienNama:pVal[1],dokterId:dVal[0],dokterNama:dVal[1],tanggal,keluhan:document.getElementById('mRMKeluhan').value,diagnosis,tekananDarah:document.getElementById('mRMTekanan').value,suhu:document.getElementById('mRMSuhu').value,berat:document.getElementById('mRMBerat').value,obatId:obatVal[0]||'',obatNama:obatVal[1]||'',catatan:document.getElementById('mRMCatatan').value,createdAt:id?(await dbGetAll('rekammedis')).find(r=>r.id===id)?.createdAt||new Date().toISOString():new Date().toISOString()};
+  await dbPut('rekammedis',obj);
+  showToast(id?'Rekam medis diperbarui!':'Rekam medis ditambahkan!','success');
+  closeModal(); renderRekamMedisTable();
+}
+
+async function deleteRekamMedis(id) {
+  if (!confirm('Hapus rekam medis ini?')) return;
+  await dbDelete('rekammedis',id);
+  showToast('Rekam medis dihapus.','info'); renderRekamMedisTable();
+}
+
+async function viewRekamMedisDetail(id) {
+  const rm = (await dbGetAll('rekammedis')).find(x=>x.id===id);
+  if (!rm) return;
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">Detail Rekam Medis</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+      <div class="bg-primary-light rounded-xl p-4 mb-4 flex gap-4">
+        <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-white filled">folder_open</span></div>
+        <div><div class="font-semibold text-primary">${rm.pasienNama}</div><div class="text-sm text-gray-500">${formatDate(rm.tanggal)} · ${rm.dokterNama}</div></div>
+      </div>
+      <div class="space-y-3 text-sm">
+        ${rm.keluhan?`<div><span class="font-medium text-gray-700">Keluhan:</span><p class="text-gray-600 mt-1">${rm.keluhan}</p></div>`:''}
+        <div><span class="font-medium text-gray-700">Diagnosis:</span><p class="text-gray-600 mt-1">${rm.diagnosis}</p></div>
+        <div class="grid grid-cols-3 gap-3">
+          ${rm.tekananDarah?`<div class="bg-gray-50 rounded-xl p-3 text-center"><div class="text-xs text-gray-400 mb-1">Tekanan Darah</div><div class="font-semibold">${rm.tekananDarah}</div></div>`:''}
+          ${rm.suhu?`<div class="bg-gray-50 rounded-xl p-3 text-center"><div class="text-xs text-gray-400 mb-1">Suhu</div><div class="font-semibold">${rm.suhu}°C</div></div>`:''}
+          ${rm.berat?`<div class="bg-gray-50 rounded-xl p-3 text-center"><div class="text-xs text-gray-400 mb-1">Berat Badan</div><div class="font-semibold">${rm.berat} kg</div></div>`:''}
+        </div>
+        ${rm.obatNama?`<div><span class="font-medium text-gray-700">Resep Obat:</span><p class="text-gray-600 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-primary text-[16px]">medication</span>${rm.obatNama}</p></div>`:''}
+        ${rm.catatan?`<div><span class="font-medium text-gray-700">Catatan:</span><p class="text-gray-600 mt-1">${rm.catatan}</p></div>`:''}
+      </div>
+      <button onclick="closeModal()" class="w-full mt-5 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-500">Tutup</button>
+    </div>`);
+}
+
+async function viewRekamMedisPasien(pasienId, pasienNama) {
+  const all = await dbGetAll('rekammedis');
+  const data = all.filter(r=>r.pasienId===pasienId).sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">Rekam Medis: ${pasienNama}</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+      ${data.length ? data.map(r=>`
+        <div class="border border-gray-100 rounded-xl p-4 mb-3">
+          <div class="flex justify-between items-start mb-2"><div class="font-semibold text-sm text-gray-800">${formatDate(r.tanggal)}</div><span class="text-xs text-gray-400">${r.dokterNama}</span></div>
+          <p class="text-sm text-gray-600"><span class="font-medium">Diagnosis:</span> ${r.diagnosis}</p>
+          ${r.tekananDarah?`<p class="text-sm text-gray-500 mt-1">TD: ${r.tekananDarah}${r.suhu?' · Suhu: '+r.suhu+'°C':''}${r.berat?' · BB: '+r.berat+' kg':''}</p>`:''}
+          ${r.obatNama?`<p class="text-sm text-primary mt-1">Obat: ${r.obatNama}</p>`:''}
+        </div>`).join('') : '<div class="text-center py-8 text-sm text-gray-400">Belum ada rekam medis</div>'}
+      <button onclick="closeModal()" class="w-full mt-2 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-500">Tutup</button>
+    </div>`);
+}
+
+// ==================== OBAT CRUD ====================
+async function renderObatTable() {
+  const q = (document.getElementById('searchObat')?.value||'').toLowerCase();
+  let data = await dbGetAll('obat');
+  if (q) data = data.filter(o=>o.nama.toLowerCase().includes(q)||o.kategori.toLowerCase().includes(q));
+  document.getElementById('obatCount').textContent = `Menampilkan ${data.length} obat`;
+  document.getElementById('obatTable').innerHTML = data.length ? data.map((o,i)=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-800">${o.nama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${o.kategori}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${o.satuan}</td>
+      <td class="px-6 py-4"><span class="${o.stok<=10?'text-red-600 font-semibold':'text-gray-700'} text-sm">${o.stok}</span></td>
+      <td class="px-6 py-4 text-sm text-gray-600">${formatRupiah(o.harga)}</td>
+      <td class="px-6 py-4"><span class="badge ${o.status==='Tersedia'?'bg-green-100 text-green-700':o.status==='Habis'?'bg-red-100 text-red-600':'bg-gray-100 text-gray-500'}">${o.status}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="openModalObat('${o.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        <button onclick="deleteObat('${o.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data obat</td></tr>';
+}
+
+function openModalObat(id=null) {
+  const doOpen = async () => {
+    const o = id ? (await dbGetAll('obat')).find(x=>x.id===id) : null;
+    const kategoriList = ['Analgesik','Antibiotik','Antasida','Antihistamin','Antidiabetik','Antihipertensi','Vitamin','Suplemen','Lainnya'];
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${o?'Edit':'Tambah'} Obat</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Nama Obat *</label><input id="mONama" value="${o?.nama||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Nama obat + dosis"/></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Kategori *</label><select id="mOKategori" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm">${kategoriList.map(k=>`<option ${o?.kategori===k?'selected':''}>${k}</option>`).join('')}</select></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Satuan *</label><select id="mOSatuan" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${o?.satuan==='Tablet'?'selected':''}>Tablet</option><option ${o?.satuan==='Kapsul'?'selected':''}>Kapsul</option><option ${o?.satuan==='Botol'?'selected':''}>Botol</option><option ${o?.satuan==='Ampul'?'selected':''}>Ampul</option><option ${o?.satuan==='Sachet'?'selected':''}>Sachet</option><option ${o?.satuan==='Tube'?'selected':''}>Tube</option></select></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Stok *</label><input type="number" id="mOStok" value="${o?.stok||0}" min="0" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Harga Satuan *</label><input type="number" id="mOHarga" value="${o?.harga||0}" min="0" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Harga dalam Rupiah"/></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Status</label><select id="mOStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${o?.status==='Tersedia'?'selected':''}>Tersedia</option><option ${o?.status==='Habis'?'selected':''}>Habis</option><option ${o?.status==='Tidak Aktif'?'selected':''}>Tidak Aktif</option></select></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveObat('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function saveObat(id) {
+  const nama=document.getElementById('mONama').value.trim();
+  const kategori=document.getElementById('mOKategori').value;
+  const satuan=document.getElementById('mOSatuan').value;
+  const stok=parseInt(document.getElementById('mOStok').value)||0;
+  const harga=parseInt(document.getElementById('mOHarga').value)||0;
+  if (!nama||!kategori) return showToast('Lengkapi nama dan kategori!','error');
+  const obj={id:id||genId(),nama,kategori,satuan,stok,harga,status:document.getElementById('mOStatus').value};
+  await dbPut('obat',obj);
+  showToast(id?'Obat diperbarui!':'Obat ditambahkan!','success');
+  closeModal(); renderObatTable();
+}
+
+async function deleteObat(id) {
+  if (!confirm('Hapus data obat ini?')) return;
+  await dbDelete('obat',id);
+  showToast('Obat dihapus.','info'); renderObatTable();
+}
+
+// ==================== PESAN KONTAK ====================
+async function submitKontak() {
+  const nama=document.getElementById('kontakNama').value.trim();
+  const email=document.getElementById('kontakEmail').value.trim();
+  const subjek=document.getElementById('kontakSubjek').value.trim();
+  const pesan=document.getElementById('kontakPesan').value.trim();
+  if (!nama||!subjek||!pesan) return showToast('Isi nama, subjek, dan pesan!','error');
+  const obj={id:genId(),nama,email,subjek,pesan,dibaca:false,createdAt:new Date().toISOString()};
+  await dbPut('pesan',obj);
+  document.getElementById('kontakNama').value='';
+  document.getElementById('kontakEmail').value='';
+  document.getElementById('kontakSubjek').value='';
+  document.getElementById('kontakPesan').value='';
+  showToast('Pesan Anda berhasil terkirim!','success');
+}
+
+async function renderPesanTable() {
+  const data = (await dbGetAll('pesan')).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('pesanCount').textContent = `${data.length} pesan`;
+  document.getElementById('pesanTable').innerHTML = data.length ? data.map((p,i)=>`
+    <tr class="border-t table-row ${!p.dibaca?'bg-blue-50/30':''}">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-800">${p.nama}${!p.dibaca?'<span class="ml-2 text-[10px] bg-blue-500 text-white rounded-full px-1.5 py-0.5">Baru</span>':''}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${p.email||'-'}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${p.subjek}</td>
+      <td class="px-6 py-4 text-sm text-gray-600 max-w-[200px] truncate">${p.pesan}</td>
+      <td class="px-6 py-4 text-sm text-gray-500">${new Date(p.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="viewPesan('${p.id}')" class="text-xs text-blue-600 hover:underline font-medium">Baca</button>
+        <button onclick="deletePesan('${p.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">Belum ada pesan</td></tr>';
+  // update badge
+  const unread = data.filter(p=>!p.dibaca).length;
+  const badge = document.getElementById('pesanBadge');
+  if (unread > 0) { badge.textContent = unread; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
+}
+
+async function viewPesan(id) {
+  const all = await dbGetAll('pesan');
+  const p = all.find(x=>x.id===id);
+  if (!p) return;
+  // mark as read
+  p.dibaca = true;
+  await dbPut('pesan', p);
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">Pesan dari ${p.nama}</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+      <div class="bg-gray-50 rounded-xl p-4 mb-4 space-y-1">
+        <p class="text-sm"><span class="font-medium">Dari:</span> ${p.nama}${p.email?' ('+p.email+')':''}</p>
+        <p class="text-sm"><span class="font-medium">Subjek:</span> ${p.subjek}</p>
+        <p class="text-sm"><span class="font-medium">Waktu:</span> ${new Date(p.createdAt).toLocaleString('id-ID')}</p>
+      </div>
+      <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${p.pesan}</div>
+      <button onclick="closeModal();renderPesanTable()" class="w-full mt-5 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-500">Tutup</button>
+    </div>`);
+}
+
+async function deletePesan(id) {
+  if (!confirm('Hapus pesan ini?')) return;
+  await dbDelete('pesan',id);
+  showToast('Pesan dihapus.','info'); renderPesanTable();
+}
+
+async function deleteAllPesan() {
+  if (!confirm('Hapus semua pesan? Tindakan ini tidak dapat dibatalkan.')) return;
+  await dbClear('pesan');
+  showToast('Semua pesan dihapus.','info'); renderPesanTable();
+}
+
+// ==================== PUBLIC RENDERS ====================
+async function renderPublicLayananHome() {
+  const layanan = (await dbGetAll('layanan')).filter(l=>l.status==='Aktif').slice(0,6);
+  document.getElementById('homeLayananGrid').innerHTML = layanan.map(l=>`
+    <div class="card-hover bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col gap-4 cursor-pointer" onclick="showPage('layanan')">
+      <div class="w-12 h-12 rounded-xl ${colorMap[l.warna]||colorMap.blue} flex items-center justify-center"><span class="material-symbols-outlined filled text-[24px]">${l.icon}</span></div>
+      <div><h3 class="font-display font-semibold text-gray-900 mb-1">${l.nama}</h3><p class="text-sm text-gray-500 leading-relaxed">${l.deskripsi}</p></div>
+      <a class="text-sm text-primary font-medium flex items-center gap-1 hover:gap-2 transition-all">Selengkapnya <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+    </div>`).join('');
+}
+
+async function renderPublicLayanan() {
+  const layanan = (await dbGetAll('layanan')).filter(l=>l.status==='Aktif');
+  document.getElementById('layananGrid').innerHTML = layanan.map(l=>`
+    <div class="card-hover bg-white rounded-2xl p-8 border border-gray-100 shadow-sm flex flex-col gap-5">
+      <div class="w-14 h-14 rounded-2xl ${colorMap[l.warna]||colorMap.blue} flex items-center justify-center"><span class="material-symbols-outlined filled text-[28px]">${l.icon}</span></div>
+      <div><h3 class="font-display font-bold text-xl text-gray-900 mb-2">${l.nama}</h3><p class="text-gray-500 leading-relaxed">${l.deskripsi}</p></div>
+      <button onclick="showPage('daftar')" class="mt-auto flex items-center gap-2 text-primary font-semibold text-sm hover:gap-3 transition-all">Daftar Sekarang <span class="material-symbols-outlined text-[18px]">arrow_forward</span></button>
+    </div>`).join('');
+}
+
+async function renderPublicDokterHome() {
+  const dokterList = (await dbGetAll('dokter')).filter(d=>d.status==='Aktif').slice(0,4);
+  const avatarColors=['bg-blue-100 text-blue-600','bg-green-100 text-green-600','bg-purple-100 text-purple-600','bg-orange-100 text-orange-600'];
+  document.getElementById('homeDokterGrid').innerHTML = dokterList.map((d,i)=>`
+    <div class="card-hover bg-white rounded-2xl p-5 border border-gray-100 shadow-sm text-center">
+      <div class="w-20 h-20 rounded-2xl ${avatarColors[i%4]} flex items-center justify-center mx-auto mb-4 text-4xl font-display font-bold">${d.nama.replace(/dr\.\s*|drg\.\s*/,'').charAt(0)}</div>
+      <h4 class="font-display font-semibold text-gray-900 text-sm mb-1">${d.nama}</h4>
+      <p class="text-xs text-primary font-medium mb-2">${d.spesialisasi}</p>
+      <p class="text-xs text-gray-400 mb-3">${d.hari||'Hubungi klinik'}</p>
+      <button onclick="showPage('daftar')" class="text-xs text-primary border border-primary rounded-lg px-3 py-1.5 hover:bg-primary-light transition">Buat Janji</button>
+    </div>`).join('');
+}
+
+async function renderPublicDokter() {
+  const dokterList = (await dbGetAll('dokter')).filter(d=>d.status==='Aktif');
+  const layananList = await dbGetAll('layanan');
+  const layananUsed = [...new Set(dokterList.map(d=>d.layananId))];
+  const filterDiv = document.getElementById('dokterFilter');
+  filterDiv.innerHTML = '<button onclick="filterDokter(\'semua\')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium bg-primary text-white" data-filter="semua">Semua</button>';
+  layananUsed.forEach(lid=>{
+    const lNama = layananList.find(l=>l.id===lid)?.nama||lid;
+    filterDiv.innerHTML += `<button onclick="filterDokter('${lid}')" class="filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-200 text-gray-600 hover:border-primary hover:text-primary" data-filter="${lid}">${lNama}</button>`;
+  });
+  window._allDokter = dokterList; window._allLayanan = layananList;
+  renderDokterCards(dokterList, layananList);
+}
+
+function filterDokter(layananId) {
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    if (b.dataset.filter===layananId){b.classList.add('bg-primary','text-white');b.classList.remove('border','border-gray-200','text-gray-600');}
+    else{b.classList.remove('bg-primary','text-white');b.classList.add('border','border-gray-200','text-gray-600');}
+  });
+  const data = layananId==='semua' ? window._allDokter : window._allDokter.filter(d=>d.layananId===layananId);
+  renderDokterCards(data, window._allLayanan||[]);
+}
+
+function renderDokterCards(dokterList, layananList) {
+  const avatarColors=['bg-blue-100 text-blue-700','bg-green-100 text-green-700','bg-purple-100 text-purple-700','bg-orange-100 text-orange-700','bg-red-100 text-red-700','bg-teal-100 text-teal-700'];
+  document.getElementById('dokterGrid').innerHTML = dokterList.map((d,i)=>{
+    const lNama = layananList.find(l=>l.id===d.layananId)?.nama||'';
+    return `<div class="card-hover bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+      <div class="w-16 h-16 rounded-2xl ${avatarColors[i%6]} flex items-center justify-center text-3xl font-display font-bold mb-4">${d.nama.replace(/dr\.\s*|drg\.\s*/,'').charAt(0)}</div>
+      <div class="text-xs font-semibold text-primary bg-primary-light inline-block px-2.5 py-1 rounded-full mb-2">${lNama}</div>
+      <h3 class="font-display font-bold text-gray-900 mb-1">${d.nama}</h3>
+      <p class="text-sm text-gray-500 mb-1">${d.spesialisasi}</p>
+      <p class="text-xs text-gray-400 mb-1"><span class="material-symbols-outlined text-[14px] align-middle">calendar_month</span> ${d.hari||'Hubungi klinik'}</p>
+      <p class="text-xs text-gray-400 mb-4"><span class="material-symbols-outlined text-[14px] align-middle">schedule</span> ${d.jam||'-'}</p>
+      <button onclick="showPage('daftar')" class="w-full bg-primary-light text-primary font-semibold text-sm py-2 rounded-xl hover:bg-primary hover:text-white transition">Buat Janji</button>
+    </div>`;
+  }).join('')||'<div class="col-span-full text-center py-12 text-gray-400">Tidak ada dokter ditemukan</div>';
+}
+
+async function renderPublicJadwal() {
+  const jadwal = (await dbGetAll('jadwal')).filter(j=>j.status==='Aktif');
+  const dokterList = await dbGetAll('dokter');
+  const hariOrder=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+  jadwal.sort((a,b)=>hariOrder.indexOf(a.hari)-hariOrder.indexOf(b.hari));
+  const today = new Date().toLocaleDateString('id-ID',{weekday:'long'});
+  document.getElementById('jadwalTable').innerHTML = jadwal.length ? jadwal.map(j=>{
+    const isToday = today.toLowerCase().startsWith(j.hari.toLowerCase());
+    const spesialisasi = dokterList.find(d=>d.id===j.dokterId)?.spesialisasi||'-';
+    return `<tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm font-medium text-gray-800">${j.dokterNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${spesialisasi}</td>
+      <td class="px-6 py-4 text-sm ${isToday?'font-bold text-primary':'text-gray-600'}">${j.hari}${isToday?' (Hari Ini)':''}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${j.jamMulai} – ${j.jamSelesai}</td>
+      <td class="px-6 py-4"><span class="badge ${isToday?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}">${isToday?'Buka':'Jadwal'}</span></td>
+      <td class="px-6 py-4"><button onclick="showPage('daftar')" class="text-xs text-primary font-medium hover:underline">Buat Janji</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">Belum ada jadwal</td></tr>';
+}
+
+// ==================== DAFTAR FORM ====================
+async function populateDaftarDropdowns() {
+  const layanan = (await dbGetAll('layanan')).filter(l=>l.status==='Aktif');
+  document.getElementById('regLayanan').innerHTML = '<option value="">Pilih Layanan...</option>'+layanan.map(l=>`<option value="${l.id}">${l.nama}</option>`).join('');
+  document.getElementById('regDokter').innerHTML = '<option value="">Pilih Dokter...</option>';
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('regTanggal').min = tomorrow.toISOString().split('T')[0];
+  // Tampilkan info pasien jika sudah login
+  const infoPasien = document.getElementById('daftarInfoPasien');
+  const formPasien = document.getElementById('daftarFormPasien');
+  if (currentPasien) {
+    infoPasien.classList.remove('hidden');
+    formPasien.classList.add('hidden');
+    document.getElementById('daftarNamaLogin').textContent = currentPasien.nama;
+    document.getElementById('daftarNikLogin').textContent = 'NIK: ' + currentPasien.nik;
+  } else {
+    infoPasien.classList.add('hidden');
+    formPasien.classList.remove('hidden');
+  }
+}
+
+async function updateDokterByLayanan() {
+  const layananId = document.getElementById('regLayanan').value;
+  const dokterList = (await dbGetAll('dokter')).filter(d=>d.layananId===layananId&&d.status==='Aktif');
+  document.getElementById('regDokter').innerHTML = '<option value="">Pilih Dokter...</option>'+dokterList.map(d=>`<option value="${d.id}">${d.nama} (${d.hari})</option>`).join('');
+}
+
+async function submitPendaftaran() {
+  const layananId = document.getElementById('regLayanan').value;
+  const dokterId  = document.getElementById('regDokter').value;
+  const tanggal   = document.getElementById('regTanggal').value;
+  const keluhan   = document.getElementById('regKeluhan').value.trim();
+  if (!layananId || !dokterId || !tanggal || !keluhan) return showToast('Lengkapi data kunjungan!', 'error');
+
+  let pasienId, namaLengkap;
+  if (currentPasien) {
+    // Sudah login — pakai data currentPasien
+    pasienId    = currentPasien.id;
+    namaLengkap = currentPasien.nama;
+  } else {
+    // Belum login — ambil dari form
+    const namaDepan = document.getElementById('regNamaDepan').value.trim();
+    const nik       = document.getElementById('regNIK').value.trim();
+    const ttl       = document.getElementById('regTTL').value;
+    const jk        = document.getElementById('regJK').value;
+    const telepon   = document.getElementById('regTelp').value.trim();
+    if (!namaDepan || !nik || !ttl || !jk || !telepon) return showToast('Lengkapi data diri!', 'error');
+    if (nik.length !== 16) return showToast('NIK harus 16 digit!', 'error');
+    const namaBelakang = document.getElementById('regNamaBelakang').value.trim();
+    namaLengkap = namaDepan + (namaBelakang ? ' ' + namaBelakang : '');
+    const pasienList = await dbGetAll('pasien');
+    let pasienExist = pasienList.find(p => p.nik === nik);
+    if (pasienExist) {
+      pasienId = pasienExist.id;
+    } else {
+      pasienId = genId();
+      await dbPut('pasien', { id: pasienId, nama: namaLengkap, nik, ttl, jk, telepon, email: document.getElementById('regAlamat') ? '' : '', alamat: document.getElementById('regAlamat').value });
+    }
+  }
+
+  const layananList = await dbGetAll('layanan');
+  const dokterList  = await dbGetAll('dokter');
+  const layananNama = layananList.find(l => l.id === layananId)?.nama || '';
+  const dokterNama  = dokterList.find(d => d.id === dokterId)?.nama || '';
+  const noReg = genRegNo();
+  const pendId = genId();
+  await dbPut('pendaftaran', { id: pendId, noReg, pasienId, pasienNama: namaLengkap, layananId, layananNama, dokterId, dokterNama, tanggal, keluhan, status: 'Menunggu', createdAt: new Date().toISOString() });
+
+  // Buat tagihan otomatis
+  const biayaKonsultasi = 100000;
+  const noBill = 'BILL-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+  await dbPut('billing', {
+    id: genId(),
+    noBill,
+    pasienId,
+    pasienNama: namaLengkap,
+    pendaftaranId: pendId,
+    noReg,
+    layananNama,
+    dokterNama,
+    tanggal,
+    itemList: [{ nama: 'Biaya Konsultasi ' + layananNama, jumlah: 1, harga: biayaKonsultasi }],
+    totalBiaya: biayaKonsultasi,
+    metodePembayaran: '',
+    status: 'Belum Lunas',
+    createdAt: new Date().toISOString()
+  });
+
+  openModal(`
+    <div class="p-7 text-center">
+      <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="material-symbols-outlined text-green-500 filled text-[32px]">check_circle</span></div>
+      <h3 class="font-display font-bold text-xl text-gray-900 mb-1">Pendaftaran Berhasil!</h3>
+      <p class="text-gray-400 text-sm mb-4">Nomor antrian Anda</p>
+      <div class="bg-primary-light text-primary font-bold text-2xl py-3 px-6 rounded-xl mb-5 tracking-wide">${noReg}</div>
+      <div class="text-sm text-left bg-gray-50 rounded-xl p-4 space-y-1.5 mb-5">
+        <div class="flex justify-between"><span class="text-gray-400">Pasien</span><span class="font-medium text-gray-800">${namaLengkap}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Layanan</span><span class="font-medium text-gray-800">${layananNama}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Dokter</span><span class="font-medium text-gray-800">${dokterNama}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Tanggal</span><span class="font-medium text-gray-800">${formatDate(tanggal)}</span></div>
+      </div>
+      <p class="text-xs text-gray-400 mb-4">Datang 15 menit sebelum jadwal, bawa kartu identitas.</p>
+      <div class="flex flex-col gap-2">
+        <button onclick="closeModal();masukPortalSetelahDaftar('${pasienId}')" class="w-full bg-accent text-white font-semibold py-2.5 rounded-xl hover:bg-green-700 text-sm">Lihat di Portal Pasien</button>
+        <button onclick="closeModal();showPage('home')" class="w-full border border-gray-100 text-gray-500 py-2.5 rounded-xl hover:bg-gray-50 text-sm">Kembali ke Beranda</button>
+      </div>
+    </div>`);
+
+  // reset form
+  ['regNamaDepan','regNamaBelakang','regNIK','regTelp','regAlamat','regKeluhan'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['regTTL','regJK','regLayanan','regDokter','regTanggal'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+}
+
+function animateCounter(el, target) {
+  let start=0; const step=Math.ceil(target/40);
+  const timer=setInterval(()=>{
+    start=Math.min(start+step,target);
+    el.textContent=start.toLocaleString('id-ID')+(target>999?'+':'');
+    if(start>=target)clearInterval(timer);
+  },40);
+}
+
+// ==================== PORTAL PASIEN ====================
+function showPortal(section) {
+  document.querySelectorAll('.portal-section').forEach(function(el){ el.style.display='none'; });
+  var el = document.getElementById('portal-' + section);
+  if (el) { el.style.display = 'block'; }
+  document.querySelectorAll('.portal-tab').forEach(function(t){
+    t.style.color = '#6b7280';
+    t.style.borderBottomColor = 'transparent';
+  });
+  var tab = document.getElementById('ptab-' + section);
+  if (tab) { tab.style.color = '#0057B8'; tab.style.borderBottomColor = '#0057B8'; }
+  if (section === 'riwayat') renderPortalRiwayat();
+  if (section === 'rekammedis') renderPortalRekamMedis();
+  if (section === 'tagihan') renderPortalTagihan();
+}
+
+async function renderPortalRiwayat() {
+  if (!currentPasien) return;
+  const all = await dbGetAll('pendaftaran');
+  const data = all.filter(r=>r.pasienId===currentPasien.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('portalRiwayatList').innerHTML = data.length ? data.map(r=>`
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="flex items-start justify-between mb-3">
+        <div><div class="font-semibold text-gray-800">${r.noReg}</div><div class="text-sm text-gray-400">${formatDate(r.tanggal)}</div></div>
+        ${statusBadge(r.status)}
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gray-400">Layanan</span><div class="font-medium text-gray-700">${r.layananNama}</div></div>
+        <div><span class="text-gray-400">Dokter</span><div class="font-medium text-gray-700">${r.dokterNama}</div></div>
+      </div>
+      <div class="mt-3 text-sm text-gray-500 bg-gray-50 rounded-xl px-4 py-2"><span class="font-medium">Keluhan:</span> ${r.keluhan}</div>
+    </div>`).join('') : '<div class="text-center py-16 text-gray-400"><span class="material-symbols-outlined text-[48px] mb-3 block">event_busy</span>Belum ada riwayat pendaftaran</div>';
+}
+
+async function renderPortalRekamMedis() {
+  if (!currentPasien) return;
+  const all = await dbGetAll('rekammedis');
+  const data = all.filter(r=>r.pasienId===currentPasien.id).sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+  document.getElementById('portalRekamMedisList').innerHTML = data.length ? data.map(r=>`
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <div class="font-semibold text-gray-800">${formatDate(r.tanggal)}</div>
+        <span class="text-sm text-gray-400">${r.dokterNama}</span>
+      </div>
+      <div class="space-y-2 text-sm">
+        <div><span class="text-gray-400">Diagnosis:</span> <span class="font-medium text-gray-700">${r.diagnosis}</span></div>
+        ${r.tekananDarah||r.suhu||r.berat?`<div class="flex gap-4 text-gray-500">${r.tekananDarah?`<span>TD: <b>${r.tekananDarah}</b></span>`:''}${r.suhu?`<span>Suhu: <b>${r.suhu}°C</b></span>`:''}${r.berat?`<span>BB: <b>${r.berat}kg</b></span>`:''}</div>`:''}
+        ${r.obatNama?`<div class="text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">medication</span> ${r.obatNama}</div>`:''}
+        ${r.catatan?`<div class="bg-gray-50 rounded-xl px-4 py-2 text-gray-500">${r.catatan}</div>`:''}
+      </div>
+    </div>`).join('') : '<div class="text-center py-16 text-gray-400"><span class="material-symbols-outlined text-[48px] mb-3 block">folder_open</span>Belum ada rekam medis</div>';
+}
+
+async function renderPortalTagihan() {
+  if (!currentPasien) return;
+  const all = await dbGetAll('billing');
+  const data = all.filter(b=>b.pasienId===currentPasien.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('portalTagihanList').innerHTML = data.length ? data.map(b=>`
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="flex items-start justify-between mb-3">
+        <div><div class="font-semibold text-gray-800">${b.noBill}</div><div class="text-sm text-gray-400">${formatDate(b.tanggal)} · ${b.layananNama}</div></div>
+        <span class="badge ${b.status==='Lunas'?'bg-green-100 text-green-700':b.status==='Belum Lunas'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-500'}">${b.status}</span>
+      </div>
+      <div class="divide-y divide-gray-50 mb-3">
+        ${(b.itemList||[]).map(it=>`<div class="flex justify-between py-1.5 text-sm"><span class="text-gray-600">${it.nama} x${it.jumlah}</span><span class="font-medium">${formatRupiah(it.harga*it.jumlah)}</span></div>`).join('')}
+      </div>
+      <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+        <span class="font-semibold text-gray-700">Total</span>
+        <span class="font-bold text-primary text-lg">${formatRupiah(b.totalBiaya)}</span>
+      </div>
+      ${b.status==='Belum Lunas' ? `
+      <div class="mt-4 pt-4 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-500 mb-2">Pilih metode pembayaran:</p>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          ${['Tunai','Transfer Bank','QRIS','BPJS'].map(m=>`
+            <button onclick="pilihMetodePembayaran('${b.id}','${m}',this)" class="metode-btn border border-gray-200 rounded-xl py-2 text-sm text-gray-600 hover:border-primary hover:text-primary hover:bg-primary-light transition font-medium" data-bill="${b.id}" data-metode="${m}">${m}</button>
+          `).join('')}
+        </div>
+        <button onclick="bayarTagihan('${b.id}')" class="w-full bg-accent text-white font-semibold py-2.5 rounded-xl hover:bg-green-700 transition text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" id="btnBayar-${b.id}" disabled>
+          <span class="material-symbols-outlined text-[18px]">payments</span> Bayar Sekarang
+        </button>
+      </div>` : `<div class="text-sm text-gray-400 mt-3 flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-green-500">check_circle</span> Dibayar via ${b.metodePembayaran}</div>`}
+    </div>`).join('') : '<div class="text-center py-16 text-gray-400"><span class="material-symbols-outlined text-[48px] mb-3 block">receipt_long</span>Belum ada tagihan</div>';
+}
+
+function pilihMetodePembayaran(billId, metode, btn) {
+  document.querySelectorAll(`.metode-btn[data-bill="${billId}"]`).forEach(function(b){
+    b.classList.remove('border-primary','text-primary','bg-primary-light','font-bold');
+    b.classList.add('border-gray-200','text-gray-600');
+  });
+  btn.classList.add('border-primary','text-primary','bg-primary-light','font-bold');
+  btn.classList.remove('border-gray-200','text-gray-600');
+  const bayarBtn = document.getElementById('btnBayar-' + billId);
+  if (bayarBtn) {
+    bayarBtn.disabled = false;
+    bayarBtn.classList.remove('opacity-50','cursor-not-allowed');
+    bayarBtn.dataset.metode = metode;
+  }
+}
+
+async function bayarTagihan(billId) {
+  const btn = document.getElementById('btnBayar-' + billId);
+  const metode = btn?.dataset?.metode;
+  if (!metode) return showToast('Pilih metode pembayaran dulu!', 'error');
+  const all = await dbGetAll('billing');
+  const bill = all.find(b => b.id === billId);
+  if (!bill) return;
+  bill.status = 'Lunas';
+  bill.metodePembayaran = metode;
+  bill.tanggalBayar = new Date().toISOString();
+  await dbPut('billing', bill);
+  showToast('Pembayaran berhasil! Terima kasih.', 'success');
+  renderPortalTagihan();
+}
+
+// ==================== BILLING CRUD ====================
+async function renderBillingSection() {
+  await renderBillingTable();
+  const all = await dbGetAll('billing');
+  const today = new Date().toISOString().split('T')[0];
+  const lunas = all.filter(b=>b.status==='Lunas');
+  const belumLunas = all.filter(b=>b.status==='Belum Lunas');
+  const totalPendapatan = lunas.reduce((s,b)=>s+b.totalBiaya,0);
+  const hariIni = lunas.filter(b=>b.tanggal===today).reduce((s,b)=>s+b.totalBiaya,0);
+  document.getElementById('billingLunas').textContent = lunas.length;
+  document.getElementById('billingBelumLunas').textContent = belumLunas.length;
+  document.getElementById('billingTotalPendapatan').textContent = formatRupiah(totalPendapatan);
+  document.getElementById('billingHariIni').textContent = formatRupiah(hariIni);
+}
+
+async function renderBillingTable() {
+  const q=(document.getElementById('searchBilling')?.value||'').toLowerCase();
+  const fs=document.getElementById('filterStatusBilling')?.value||'';
+  let data=await dbGetAll('billing');
+  if(q) data=data.filter(b=>b.noBill.toLowerCase().includes(q)||b.pasienNama.toLowerCase().includes(q));
+  if(fs) data=data.filter(b=>b.status===fs);
+  data=[...data].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('billingCount').textContent=`Menampilkan ${data.length} tagihan`;
+  document.getElementById('billingTable').innerHTML=data.length?data.map(b=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm font-medium text-primary">${b.noBill}</td>
+      <td class="px-6 py-4 text-sm text-gray-800">${b.pasienNama}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${b.layananNama}</td>
+      <td class="px-6 py-4 text-sm font-semibold text-gray-800">${formatRupiah(b.totalBiaya)}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${b.metodePembayaran||'-'}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${formatDate(b.tanggal)}</td>
+      <td class="px-6 py-4"><span class="badge ${b.status==='Lunas'?'bg-green-100 text-green-700':b.status==='Belum Lunas'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-500'}">${b.status}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="viewBillingDetail('${b.id}')" class="text-xs text-green-600 hover:underline font-medium">Detail</button>
+        <button onclick="openModalBilling('${b.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        ${b.status==='Belum Lunas'?`<button onclick="lunaskanBilling('${b.id}')" class="text-xs text-yellow-600 hover:underline font-medium">Lunaskan</button>`:''}
+        <button onclick="deleteBilling('${b.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data tagihan</td></tr>';
+}
+
+function openModalBilling(id=null) {
+  const doOpen = async () => {
+    const b = id?(await dbGetAll('billing')).find(x=>x.id===id):null;
+    const pasienList=await dbGetAll('pasien');
+    const layananList=await dbGetAll('layanan');
+    const obatList=(await dbGetAll('obat')).filter(o=>o.status==='Tersedia');
+    const existingItems = b?.itemList||[{nama:'Biaya Konsultasi',jumlah:1,harga:100000}];
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${b?'Edit':'Buat'} Tagihan</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Pasien *</label><select id="mBPasien" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Pasien</option>${pasienList.map(p=>`<option value="${p.id}|${p.nama}" ${b?.pasienId===p.id?'selected':''}>${p.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Layanan</label><select id="mBLayanan" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih Layanan</option>${layananList.map(l=>`<option value="${l.nama}" ${b?.layananNama===l.nama?'selected':''}>${l.nama}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Tanggal</label><input type="date" id="mBTgl" value="${b?.tanggal||new Date().toISOString().split('T')[0]}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"/></div>
+          <div>
+            <label class="text-sm font-medium text-gray-700 block mb-2">Item Tagihan</label>
+            <div id="billingItems" class="space-y-2 mb-2">
+              ${existingItems.map((it,idx)=>`
+              <div class="flex gap-2 items-center" id="bitem-${idx}">
+                <input value="${it.nama}" placeholder="Nama item" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bitem-nama"/>
+                <input type="number" value="${it.jumlah}" min="1" class="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm bitem-jml"/>
+                <input type="number" value="${it.harga}" min="0" placeholder="Harga" class="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm bitem-harga"/>
+                <button onclick="removeBillingItem(${idx})" class="text-red-400 hover:text-red-600"><span class="material-symbols-outlined text-[18px]">close</span></button>
+              </div>`).join('')}
+            </div>
+            <button onclick="addBillingItem()" class="text-sm text-primary font-medium flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-[16px]">add</span> Tambah Item</button>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Metode Pembayaran</label><select id="mBMetode" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Pilih metode...</option><option ${b?.metodePembayaran==='Tunai'?'selected':''}>Tunai</option><option ${b?.metodePembayaran==='Transfer Bank'?'selected':''}>Transfer Bank</option><option ${b?.metodePembayaran==='BPJS'?'selected':''}>BPJS</option><option ${b?.metodePembayaran==='Kartu Kredit'?'selected':''}>Kartu Kredit</option><option ${b?.metodePembayaran==='QRIS'?'selected':''}>QRIS</option></select></div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Status</label><select id="mBStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${b?.status!=='Lunas'&&b?.status!=='Dibatalkan'?'selected':''}>Belum Lunas</option><option ${b?.status==='Lunas'?'selected':''}>Lunas</option><option ${b?.status==='Dibatalkan'?'selected':''}>Dibatalkan</option></select></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveBilling('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+function addBillingItem() {
+  const container = document.getElementById('billingItems');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className='flex gap-2 items-center'; div.id=`bitem-${idx}`;
+  div.innerHTML=`<input placeholder="Nama item" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bitem-nama"/><input type="number" value="1" min="1" class="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm bitem-jml"/><input type="number" value="0" min="0" placeholder="Harga" class="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm bitem-harga"/><button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600"><span class="material-symbols-outlined text-[18px]">close</span></button>`;
+  container.appendChild(div);
+}
+function removeBillingItem(idx) { document.getElementById('bitem-'+idx)?.remove(); }
+
+async function saveBilling(id) {
+  const pVal=document.getElementById('mBPasien').value.split('|');
+  const layananNama=document.getElementById('mBLayanan').value;
+  const tanggal=document.getElementById('mBTgl').value;
+  if(!pVal[0]||!tanggal) return showToast('Pilih pasien dan tanggal!','error');
+  // collect items
+  const itemEls=document.querySelectorAll('#billingItems > div');
+  const itemList=[...itemEls].map(el=>({
+    nama:el.querySelector('.bitem-nama').value||'Item',
+    jumlah:parseInt(el.querySelector('.bitem-jml').value)||1,
+    harga:parseInt(el.querySelector('.bitem-harga').value)||0
+  }));
+  const totalBiaya=itemList.reduce((s,it)=>s+it.jumlah*it.harga,0);
+  const existing=id?(await dbGetAll('billing')).find(b=>b.id===id):null;
+  const obj={id:id||genId(),noBill:existing?.noBill||('BILL-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*9000)+1000)),pasienId:pVal[0],pasienNama:pVal[1],layananNama,dokterNama:'',tanggal,itemList,totalBiaya,metodePembayaran:document.getElementById('mBMetode').value,status:document.getElementById('mBStatus').value,createdAt:existing?.createdAt||new Date().toISOString()};
+  await dbPut('billing',obj);
+  showToast(id?'Tagihan diperbarui!':'Tagihan dibuat!','success');
+  closeModal(); renderBillingSection();
+}
+
+async function lunaskanBilling(id) {
+  const data=await dbGetAll('billing');
+  const b=data.find(x=>x.id===id);
+  if(!b) return;
+  openModal(`
+    <div class="p-6">
+      <h3 class="font-display font-bold text-lg mb-4">Konfirmasi Pembayaran</h3>
+      <p class="text-sm text-gray-500 mb-2">Tagihan: <strong>${b.noBill}</strong></p>
+      <p class="text-sm text-gray-500 mb-5">Pasien: <strong>${b.pasienNama}</strong> — Total: <strong>${formatRupiah(b.totalBiaya)}</strong></p>
+      <div class="mb-4"><label class="text-sm font-medium text-gray-700 block mb-1">Metode Pembayaran *</label><select id="konfirmMetode" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option>Tunai</option><option>Transfer Bank</option><option>BPJS</option><option>Kartu Kredit</option><option>QRIS</option></select></div>
+      <div class="flex gap-3">
+        <button onclick="konfirmasiLunas('${id}')" class="flex-1 bg-green-500 text-white font-semibold py-2.5 rounded-xl hover:bg-green-600">Konfirmasi Lunas</button>
+        <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+      </div>
+    </div>`);
+}
+
+async function konfirmasiLunas(id) {
+  const metode=document.getElementById('konfirmMetode').value;
+  const data=await dbGetAll('billing');
+  const b=data.find(x=>x.id===id);
+  if(b){b.status='Lunas';b.metodePembayaran=metode;await dbPut('billing',b);}
+  showToast('Pembayaran dikonfirmasi!','success');
+  closeModal(); renderBillingSection();
+}
+
+async function deleteBilling(id) {
+  if(!confirm('Hapus tagihan ini?')) return;
+  await dbDelete('billing',id);
+  showToast('Tagihan dihapus.','info'); renderBillingSection();
+}
+
+async function viewBillingDetail(id) {
+  const b=(await dbGetAll('billing')).find(x=>x.id===id);
+  if(!b) return;
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">Detail Tagihan</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+      <div class="bg-primary-light rounded-xl p-4 mb-4">
+        <div class="font-bold text-primary text-lg mb-1">${b.noBill}</div>
+        <div class="text-sm text-gray-600">${b.pasienNama} · ${formatDate(b.tanggal)}</div>
+        <div class="text-sm text-gray-500">${b.layananNama}</div>
+      </div>
+      <div class="divide-y divide-gray-100 mb-4">
+        ${(b.itemList||[]).map(it=>`<div class="flex justify-between py-2.5 text-sm"><span class="text-gray-600">${it.nama} <span class="text-gray-400">x${it.jumlah}</span></span><span class="font-medium">${formatRupiah(it.harga*it.jumlah)}</span></div>`).join('')}
+      </div>
+      <div class="flex justify-between items-center py-3 border-t-2 border-gray-200">
+        <span class="font-bold text-gray-800">TOTAL</span>
+        <span class="font-bold text-primary text-xl">${formatRupiah(b.totalBiaya)}</span>
+      </div>
+      <div class="flex gap-4 mt-3 text-sm text-gray-500">
+        <span>Status: <strong class="${b.status==='Lunas'?'text-green-600':'text-yellow-600'}">${b.status}</strong></span>
+        ${b.metodePembayaran?`<span>Metode: <strong>${b.metodePembayaran}</strong></span>`:''}
+      </div>
+      <button onclick="closeModal()" class="w-full mt-5 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-500">Tutup</button>
+    </div>`);
+}
+
+// ==================== USER MANAGEMENT CRUD ====================
+async function renderUsersTable() {
+  const data=await dbGetAll('adminusers');
+  const roleColors={Superadmin:'bg-purple-100 text-purple-700',Administrasi:'bg-blue-100 text-blue-700',Perawat:'bg-green-100 text-green-700',Dokter:'bg-teal-100 text-teal-700',Kasir:'bg-yellow-100 text-yellow-700'};
+  document.getElementById('usersTable').innerHTML=data.length?data.map((u,i)=>`
+    <tr class="border-t table-row">
+      <td class="px-6 py-4 text-sm text-gray-500">${i+1}</td>
+      <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary font-semibold text-sm">${u.nama[0]}</div><span class="text-sm font-medium text-gray-800">${u.nama}</span></div></td>
+      <td class="px-6 py-4 text-sm font-mono text-gray-600">${u.username}</td>
+      <td class="px-6 py-4"><span class="badge ${roleColors[u.role]||'bg-gray-100 text-gray-600'}">${u.role}</span></td>
+      <td class="px-6 py-4 text-sm text-gray-500 max-w-[200px]">${(u.hakAkses||[]).join(', ')}</td>
+      <td class="px-6 py-4"><span class="badge ${u.status==='Aktif'?'bg-green-100 text-green-700':'bg-red-100 text-red-600'}">${u.status}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-2">
+        <button onclick="openModalUser('${u.id}')" class="text-xs text-blue-600 hover:underline font-medium">Edit</button>
+        ${u.id!=='u1'?`<button onclick="deleteUser('${u.id}')" class="text-xs text-red-500 hover:underline font-medium">Hapus</button>`:''}
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">Tidak ada data</td></tr>';
+}
+
+function openModalUser(id=null) {
+  const doOpen = async () => {
+    const u=id?(await dbGetAll('adminusers')).find(x=>x.id===id):null;
+    const hakAksesOptions=['dashboard','pasien','dokter','layanan','pendaftaran','jadwal','rekammedis','obat','pesan','billing','users'];
+    const userHak=u?.hakAkses||['dashboard'];
+    openModal(`
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-5"><h3 class="font-display font-bold text-lg">${u?'Edit':'Tambah'} User Admin</h3><button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Nama Lengkap *</label><input id="mUNama" value="${u?.nama||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Nama lengkap"/></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Username *</label><input id="mUUsername" value="${u?.username||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono" placeholder="username"/></div>
+            <div><label class="text-sm font-medium text-gray-700 block mb-1">Password *</label><input type="password" id="mUPassword" value="${u?.password||''}" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="${u?'Kosongkan jika tidak ganti':'Password baru'}"/></div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Role *</label><select id="mURole" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${u?.role==='Superadmin'?'selected':''}>Superadmin</option><option ${u?.role==='Administrasi'?'selected':''}>Administrasi</option><option ${u?.role==='Perawat'?'selected':''}>Perawat</option><option ${u?.role==='Dokter'?'selected':''}>Dokter</option><option ${u?.role==='Kasir'?'selected':''}>Kasir</option></select></div>
+          <div>
+            <label class="text-sm font-medium text-gray-700 block mb-2">Hak Akses Menu</label>
+            <div class="grid grid-cols-3 gap-2">
+              ${hakAksesOptions.map(h=>`<label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="hak-check rounded" value="${h}" ${userHak.includes(h)?'checked':''}/>${h}</label>`).join('')}
+            </div>
+          </div>
+          <div><label class="text-sm font-medium text-gray-700 block mb-1">Status</label><select id="mUStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option ${u?.status!=='Nonaktif'?'selected':''}>Aktif</option><option ${u?.status==='Nonaktif'?'selected':''}>Nonaktif</option></select></div>
+          <div class="flex gap-3 pt-2">
+            <button onclick="saveUser('${id||''}')" class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl hover:bg-primary-dark">Simpan</button>
+            <button onclick="closeModal()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+          </div>
+        </div>
+      </div>`);
+  };
+  doOpen();
+}
+
+async function saveUser(id) {
+  const nama=document.getElementById('mUNama').value.trim();
+  const username=document.getElementById('mUUsername').value.trim();
+  const passwordRaw=document.getElementById('mUPassword').value;
+  const role=document.getElementById('mURole').value;
+  const status=document.getElementById('mUStatus').value;
+  const hakAkses=[...document.querySelectorAll('.hak-check:checked')].map(el=>el.value);
+  if(!nama||!username) return showToast('Nama dan username wajib diisi!','error');
+  if(!id&&!passwordRaw) return showToast('Password wajib diisi untuk user baru!','error');
+  // cek username unik
+  const existing=await dbGetAll('adminusers');
+  if(existing.find(u=>u.username===username&&u.id!==id)) return showToast('Username sudah digunakan!','error');
+  const old=id?existing.find(u=>u.id===id):null;
+  const obj={id:id||genId(),nama,username,password:passwordRaw||old?.password||'',role,hakAkses,status,createdAt:old?.createdAt||new Date().toISOString()};
+  await dbPut('adminusers',obj);
+  showToast(id?'User diperbarui!':'User ditambahkan!','success');
+  closeModal(); renderUsersTable();
+}
+
+async function deleteUser(id) {
+  if(!confirm('Hapus akun user ini?')) return;
+  await dbDelete('adminusers',id);
+  showToast('User dihapus.','info'); renderUsersTable();
+}
+
+// ==================== PORTAL PASIEN HELPERS ====================
+async function masukPortalSetelahDaftar(pasienId) {
+  const pasienList = await dbGetAll('pasien');
+  const found = pasienList.find(function(p){ return p.id === pasienId; });
+  if (found) {
+    currentPasien = found;
+    document.getElementById('publicSite').style.display = 'none';
+    document.getElementById('portalPasien').style.display = 'block';
+    document.getElementById('portalPasienNama').textContent = found.nama;
+    showPortal('riwayat');
+    showToast('Selamat datang, ' + found.nama + '!', 'success');
+  }
+}
+
+function daftarDariPortal() {
+  document.getElementById('portalPasien').style.display = 'none';
+  showPage('daftar');
+  if (currentPasien) {
+    var namaArr = (currentPasien.nama || '').split(' ');
+    var el = function(id){ return document.getElementById(id); };
+    el('regNamaDepan').value = namaArr[0] || '';
+    el('regNamaBelakang').value = namaArr.slice(1).join(' ');
+    el('regNIK').value = currentPasien.nik || '';
+    el('regTTL').value = currentPasien.ttl || '';
+    el('regJK').value = currentPasien.jk || '';
+    el('regTelp').value = currentPasien.telepon || '';
+    el('regEmail').value = currentPasien.email || '';
+    el('regAlamat').value = currentPasien.alamat || '';
+  }
+}
+
+// ==================== INIT ====================
+async function init() {
+  // Tidak perlu openDB() — menggunakan PHP/MySQL via api.php
+  document.getElementById('loadingScreen').style.display = 'none';
+  showPage('home');
+  await renderPublicLayananHome();
+  await renderPublicDokterHome();
+  setTimeout(()=>{
+    animateCounter(document.getElementById('statPasien'),5200);
+    animateCounter(document.getElementById('statDokter'),15);
+    animateCounter(document.getElementById('statTahun'),12);
+  },500);
+}
+
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').classList.toggle('shadow-md',window.scrollY>20);
+});
+
+init().catch(console.error);
+</script>
+</body>
+</html>
